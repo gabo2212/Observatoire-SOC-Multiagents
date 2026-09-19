@@ -1,0 +1,14 @@
+{
+  "id": "acme_exfiltration",
+  "name": "ACME — Exfiltration",
+  "description": "DLP / USB / cloud non approuvé",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Évaluer risque d'exfiltration RH hors horaires.",
+  "tags": [
+    "dlp",
+    "insider",
+    "acme"
+  ],
+  "source": "bundled"
+}

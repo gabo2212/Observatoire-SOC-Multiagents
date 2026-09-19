@@ -1,0 +1,9 @@
+[
+  {"alert_id": "ALT-EX-001", "ts": "2026-09-14T01:12:00Z", "source": "dlp", "rule": "LARGE_UPLOAD", "severity": "high", "src_ip": "10.2.9.14", "dst_asset": "WS-HR-03", "user": "m.gagnon", "msg": "2.4 GB upload to personal cloud endpoint"},
+  {"alert_id": "ALT-EX-002", "ts": "2026-09-14T01:15:33Z", "source": "proxy", "rule": "UNAPPROVED_CLOUD", "severity": "medium", "src_ip": "10.2.9.14", "dst_asset": "WS-HR-03", "user": "m.gagnon", "msg": "Connection to unsanctioned file-sharing domain"},
+  {"alert_id": "ALT-EX-003", "ts": "2026-09-14T01:18:02Z", "source": "edr", "rule": "USB_MASS_COPY", "severity": "high", "src_ip": "10.2.9.14", "dst_asset": "WS-HR-03", "user": "m.gagnon", "msg": "850 MB copied to removable media after hours"},
+  {"alert_id": "ALT-EX-004", "ts": "2026-09-13T16:40:00Z", "source": "siem", "rule": "SENSITIVE_SHARE_ACCESS", "severity": "medium", "src_ip": "10.2.9.14", "dst_asset": "SRV-FILE02", "user": "m.gagnon", "msg": "Access to HR archive share rarely used by account"},
+  {"alert_id": "ALT-EX-005", "ts": "2026-09-14T01:05:00Z", "source": "idp", "rule": "OFF_HOURS_LOGIN", "severity": "low", "src_ip": "10.2.9.14", "dst_asset": "WS-HR-03", "user": "m.gagnon", "msg": "Interactive login at 01:05 local time"},
+  {"alert_id": "ALT-EX-006", "ts": "2026-09-14T01:22:40Z", "source": "dlp", "rule": "PII_DETECT", "severity": "critical", "src_ip": "10.2.9.14", "dst_asset": "WS-HR-03", "user": "m.gagnon", "msg": "Outbound archive contains employee SIN patterns"},
+  {"alert_id": "ALT-EX-007", "ts": "2026-09-14T08:00:00Z", "source": "email", "rule": "BENIGN_REPORT_EXPORT", "severity": "info", "src_ip": "10.2.1.5", "dst_asset": "WS-FIN-12", "user": "finance.bot", "msg": "Scheduled anonymized KPI export — likely benign"}
+]

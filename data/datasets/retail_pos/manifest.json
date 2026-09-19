@@ -1,0 +1,14 @@
+{
+  "id": "retail_pos",
+  "name": "Retail — malware POS",
+  "description": "Infection caisse + beacon C2 + scraping mémoire",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Trier incident caisses POS: malware, C2 et impact passerelle paiement.",
+  "tags": [
+    "retail",
+    "pos",
+    "malware"
+  ],
+  "source": "bundled"
+}

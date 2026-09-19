@@ -1,0 +1,34 @@
+[
+  {
+    "asset_id": "API-PAY01",
+    "hostname": "api.paynova-lab.test",
+    "type": "api",
+    "criticality": 5,
+    "owner": "Payments",
+    "zone": "cloud"
+  },
+  {
+    "asset_id": "WEB-PORTAL",
+    "hostname": "portal.paynova-lab.test",
+    "type": "web_server",
+    "criticality": 4,
+    "owner": "Frontend",
+    "zone": "dmz"
+  },
+  {
+    "asset_id": "DB-LEDGER",
+    "hostname": "ledger-db.paynova-lab.test",
+    "type": "database",
+    "criticality": 5,
+    "owner": "Data",
+    "zone": "restricted"
+  },
+  {
+    "asset_id": "CI-RUNNER",
+    "hostname": "gha-runner.paynova-lab.test",
+    "type": "ci",
+    "criticality": 3,
+    "owner": "DevOps",
+    "zone": "cloud"
+  }
+]

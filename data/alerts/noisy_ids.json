@@ -1,0 +1,10 @@
+[
+  {"alert_id": "ALT-N-001", "ts": "2026-09-15T11:00:00Z", "source": "ids", "rule": "SQLI_GENERIC", "severity": "medium", "src_ip": "203.0.113.200", "dst_asset": "SRV-WEB01", "user": null, "msg": "Generic SQLi signature on public search page"},
+  {"alert_id": "ALT-N-002", "ts": "2026-09-15T11:00:04Z", "source": "ids", "rule": "SQLI_GENERIC", "severity": "medium", "src_ip": "203.0.113.201", "dst_asset": "SRV-WEB01", "user": null, "msg": "Same signature, different scanner IP"},
+  {"alert_id": "ALT-N-003", "ts": "2026-09-15T11:00:09Z", "source": "ids", "rule": "SQLI_GENERIC", "severity": "medium", "src_ip": "203.0.113.202", "dst_asset": "SRV-WEB01", "user": null, "msg": "Known internet noise pattern"},
+  {"alert_id": "ALT-N-004", "ts": "2026-09-15T11:01:00Z", "source": "ids", "rule": "XSS_REFLECTED", "severity": "low", "src_ip": "198.51.100.50", "dst_asset": "SRV-WEB01", "user": null, "msg": "Reflected XSS probe without session cookie"},
+  {"alert_id": "ALT-N-005", "ts": "2026-09-15T11:02:30Z", "source": "waf", "rule": "BOT_SCAN", "severity": "info", "src_ip": "203.0.113.200", "dst_asset": "SRV-WEB01", "user": null, "msg": "Automated vulnerability scanner fingerprint"},
+  {"alert_id": "ALT-N-006", "ts": "2026-09-15T11:05:00Z", "source": "edr", "rule": "WEB_SHELL_WRITE", "severity": "critical", "src_ip": "10.0.8.3", "dst_asset": "SRV-WEB01", "user": "www-data", "msg": "Unexpected PHP file written under /var/www/uploads"},
+  {"alert_id": "ALT-N-007", "ts": "2026-09-15T11:06:12Z", "source": "ids", "rule": "SQLI_GENERIC", "severity": "medium", "src_ip": "203.0.113.210", "dst_asset": "SRV-WEB01", "user": null, "msg": "Additional noisy SQLi alert"},
+  {"alert_id": "ALT-N-008", "ts": "2026-09-15T11:07:00Z", "source": "ids", "rule": "DIR_TRAVERSAL", "severity": "low", "src_ip": "203.0.113.211", "dst_asset": "SRV-WEB01", "user": null, "msg": "Common traversal probe blocked by WAF"}
+]

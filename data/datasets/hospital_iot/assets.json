@@ -1,0 +1,34 @@
+[
+  {
+    "asset_id": "PACS-01",
+    "hostname": "pacs.hopital-lab.test",
+    "type": "medical_imaging",
+    "criticality": 5,
+    "owner": "Radiologie",
+    "zone": "clinical"
+  },
+  {
+    "asset_id": "HIS-DB",
+    "hostname": "his-db.hopital-lab.test",
+    "type": "database",
+    "criticality": 5,
+    "owner": "DSI",
+    "zone": "restricted"
+  },
+  {
+    "asset_id": "IOT-PUMP3",
+    "hostname": "pump-3.hopital-lab.test",
+    "type": "iot",
+    "criticality": 4,
+    "owner": "Biomed",
+    "zone": "iot"
+  },
+  {
+    "asset_id": "WIFI-CTRL",
+    "hostname": "wlc.hopital-lab.test",
+    "type": "network",
+    "criticality": 3,
+    "owner": "R\u00e9seau",
+    "zone": "edge"
+  }
+]

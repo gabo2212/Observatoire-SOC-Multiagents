@@ -1,0 +1,14 @@
+{
+  "id": "hospital_iot",
+  "name": "Hôpital — IoT clinique",
+  "description": "Pompe IoT compromise → PACS + export PHI",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Prioriser les alertes cliniques: IoT, imagerie PACS et données PHI.",
+  "tags": [
+    "healthcare",
+    "iot",
+    "phi"
+  ],
+  "source": "bundled"
+}

@@ -1,0 +1,12 @@
+[
+  {"asset_id": "SRV-DC01", "hostname": "dc01.acme-lab.local", "type": "domain_controller", "criticality": 5, "owner": "Infrastructure", "zone": "core"},
+  {"asset_id": "SRV-FILE02", "hostname": "files02.acme-lab.local", "type": "file_server", "criticality": 4, "owner": "Infrastructure", "zone": "internal"},
+  {"asset_id": "SRV-BACKUP", "hostname": "backup01.acme-lab.local", "type": "backup", "criticality": 5, "owner": "Infrastructure", "zone": "restricted"},
+  {"asset_id": "WS-FIN-12", "hostname": "ws-fin-12.acme-lab.local", "type": "workstation", "criticality": 3, "owner": "Finance", "zone": "internal"},
+  {"asset_id": "WS-HR-03", "hostname": "ws-hr-03.acme-lab.local", "type": "workstation", "criticality": 3, "owner": "RH", "zone": "internal"},
+  {"asset_id": "SRV-WEB01", "hostname": "web01.acme-lab.local", "type": "web_server", "criticality": 4, "owner": "DevOps", "zone": "dmz"},
+  {"asset_id": "SRV-DB01", "hostname": "db01.acme-lab.local", "type": "database", "criticality": 5, "owner": "Data", "zone": "restricted"},
+  {"asset_id": "VPN-GW01", "hostname": "vpn.acme-lab.local", "type": "vpn_gateway", "criticality": 4, "owner": "Sécurité", "zone": "edge"},
+  {"asset_id": "SRV-MAIL01", "hostname": "mail01.acme-lab.local", "type": "mail", "criticality": 4, "owner": "Messaging", "zone": "internal"},
+  {"asset_id": "IOT-CAM07", "hostname": "cam07.acme-lab.local", "type": "iot", "criticality": 1, "owner": "Facilities", "zone": "iot"}
+]

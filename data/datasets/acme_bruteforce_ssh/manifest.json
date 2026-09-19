@@ -1,0 +1,14 @@
+{
+  "id": "acme_bruteforce_ssh",
+  "name": "ACME — Brute-force SSH",
+  "description": "Campagne brute-force vers VPN/DC",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Trier et prioriser la campagne brute-force SSH ACME-LAB.",
+  "tags": [
+    "ssh",
+    "bruteforce",
+    "acme"
+  ],
+  "source": "bundled"
+}

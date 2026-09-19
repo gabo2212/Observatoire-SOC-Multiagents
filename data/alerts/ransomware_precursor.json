@@ -1,0 +1,8 @@
+[
+  {"alert_id": "ALT-RW-001", "ts": "2026-09-16T22:01:00Z", "source": "edr", "rule": "SHADOW_COPY_DELETE", "severity": "critical", "src_ip": "10.0.5.22", "dst_asset": "SRV-FILE02", "user": "SYSTEM", "msg": "vssadmin delete shadows executed"},
+  {"alert_id": "ALT-RW-002", "ts": "2026-09-16T22:03:18Z", "source": "edr", "rule": "BACKUP_SERVICE_STOP", "severity": "critical", "src_ip": "10.0.5.22", "dst_asset": "SRV-BACKUP", "user": "admin_temp", "msg": "Backup service stopped unexpectedly"},
+  {"alert_id": "ALT-RW-003", "ts": "2026-09-16T22:07:41Z", "source": "ids", "rule": "SMB_LATERAL", "severity": "high", "src_ip": "10.0.5.22", "dst_asset": "SRV-DB01", "user": "admin_temp", "msg": "Admin share access burst across 6 hosts"},
+  {"alert_id": "ALT-RW-004", "ts": "2026-09-16T22:12:09Z", "source": "edr", "rule": "MASS_FILE_RENAME", "severity": "critical", "src_ip": "10.0.5.22", "dst_asset": "SRV-FILE02", "user": "SYSTEM", "msg": "1200 files renamed with .locked extension"},
+  {"alert_id": "ALT-RW-005", "ts": "2026-09-16T22:15:00Z", "source": "siem", "rule": "NEW_ADMIN_ACCOUNT", "severity": "high", "src_ip": "10.0.5.22", "dst_asset": "SRV-DC01", "user": "admin_temp", "msg": "Local admin account created then used for lateral movement"},
+  {"alert_id": "ALT-RW-006", "ts": "2026-09-16T21:55:12Z", "source": "ids", "rule": "PORT_SCAN", "severity": "medium", "src_ip": "10.0.5.22", "dst_asset": "SRV-WEB01", "user": null, "msg": "Internal reconnaissance preceding destructive actions"}
+]

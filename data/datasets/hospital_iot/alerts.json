@@ -1,0 +1,57 @@
+[
+  {
+    "alert_id": "ALT-HP-001",
+    "ts": "2026-09-12T14:00:00Z",
+    "source": "ids",
+    "rule": "IOT_DEFAULT_CREDS",
+    "severity": "high",
+    "src_ip": "10.40.3.12",
+    "dst_asset": "IOT-PUMP3",
+    "user": "admin",
+    "msg": "Login default credentials on infusion pump VLAN"
+  },
+  {
+    "alert_id": "ALT-HP-002",
+    "ts": "2026-09-12T14:05:00Z",
+    "source": "ids",
+    "rule": "LATERAL_SMB",
+    "severity": "critical",
+    "src_ip": "10.40.3.12",
+    "dst_asset": "PACS-01",
+    "user": null,
+    "msg": "SMB lateral from IoT VLAN to PACS"
+  },
+  {
+    "alert_id": "ALT-HP-003",
+    "ts": "2026-09-12T14:08:00Z",
+    "source": "dlp",
+    "rule": "PHI_EXPORT",
+    "severity": "critical",
+    "src_ip": "10.20.1.8",
+    "dst_asset": "HIS-DB",
+    "user": "tech_temp",
+    "msg": "Bulk PHI export outside approved window"
+  },
+  {
+    "alert_id": "ALT-HP-004",
+    "ts": "2026-09-12T13:50:00Z",
+    "source": "wifi",
+    "rule": "ROGUE_AP",
+    "severity": "medium",
+    "src_ip": null,
+    "dst_asset": "WIFI-CTRL",
+    "user": null,
+    "msg": "Rogue AP detected near ER wing"
+  },
+  {
+    "alert_id": "ALT-HP-005",
+    "ts": "2026-09-12T14:01:00Z",
+    "source": "ids",
+    "rule": "NMAP_SCAN",
+    "severity": "low",
+    "src_ip": "10.40.9.9",
+    "dst_asset": "IOT-PUMP3",
+    "user": null,
+    "msg": "Benign biomed inventory scan (scheduled)"
+  }
+]

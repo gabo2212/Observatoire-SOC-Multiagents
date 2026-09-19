@@ -1,0 +1,14 @@
+{
+  "id": "fintech_paynova",
+  "name": "Fintech PayNova — fraude API",
+  "description": "Credential stuffing + abus API paiement + lecture ledger",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Trier les alertes fraude/paiement PayNova: distinguer bots, session compromise et accès ledger.",
+  "tags": [
+    "fintech",
+    "api",
+    "fraud"
+  ],
+  "source": "bundled"
+}

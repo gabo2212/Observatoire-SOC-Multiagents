@@ -1,0 +1,57 @@
+[
+  {
+    "alert_id": "ALT-RT-001",
+    "ts": "2026-09-08T19:10:00Z",
+    "source": "edr",
+    "rule": "POS_MALWARE_HASH",
+    "severity": "critical",
+    "src_ip": "10.55.12.12",
+    "dst_asset": "POS-FLOOR12",
+    "user": "SYSTEM",
+    "msg": "Known POS malware hash matched"
+  },
+  {
+    "alert_id": "ALT-RT-002",
+    "ts": "2026-09-08T19:12:00Z",
+    "source": "net",
+    "rule": "C2_BEACON",
+    "severity": "critical",
+    "src_ip": "10.55.12.12",
+    "dst_asset": "POS-FLOOR12",
+    "user": null,
+    "msg": "Periodic beacon to suspicious CDN IP"
+  },
+  {
+    "alert_id": "ALT-RT-003",
+    "ts": "2026-09-08T19:15:00Z",
+    "source": "edr",
+    "rule": "MEM_SCRAPE",
+    "severity": "high",
+    "src_ip": "10.55.12.13",
+    "dst_asset": "POS-FLOOR13",
+    "user": "SYSTEM",
+    "msg": "Process reading card track memory"
+  },
+  {
+    "alert_id": "ALT-RT-004",
+    "ts": "2026-09-08T18:40:00Z",
+    "source": "waf",
+    "rule": "MAGENTO_PROBE",
+    "severity": "medium",
+    "src_ip": "203.0.113.66",
+    "dst_asset": "ECOM-WEB",
+    "user": null,
+    "msg": "Magento plugin probe"
+  },
+  {
+    "alert_id": "ALT-RT-005",
+    "ts": "2026-09-08T19:20:00Z",
+    "source": "siem",
+    "rule": "PAYGW_ERROR_BURST",
+    "severity": "high",
+    "src_ip": "10.55.12.12",
+    "dst_asset": "PAY-GW",
+    "user": "pos_svc",
+    "msg": "Payment gateway errors spike from infected POS"
+  }
+]

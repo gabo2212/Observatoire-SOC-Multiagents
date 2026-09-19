@@ -1,0 +1,68 @@
+[
+  {
+    "alert_id": "ALT-FN-001",
+    "ts": "2026-09-10T08:01:00Z",
+    "source": "waf",
+    "rule": "CRED_STUFFING",
+    "severity": "high",
+    "src_ip": "45.33.1.10",
+    "dst_asset": "WEB-PORTAL",
+    "user": null,
+    "msg": "Credential stuffing 2k attempts / 5 min"
+  },
+  {
+    "alert_id": "ALT-FN-002",
+    "ts": "2026-09-10T08:04:00Z",
+    "source": "idp",
+    "rule": "TOKEN_ANOMALY",
+    "severity": "critical",
+    "src_ip": "45.33.1.10",
+    "dst_asset": "API-PAY01",
+    "user": "merchant_77",
+    "msg": "OAuth token reused from new ASN"
+  },
+  {
+    "alert_id": "ALT-FN-003",
+    "ts": "2026-09-10T08:06:00Z",
+    "source": "api_gw",
+    "rule": "PAY_SPIKE",
+    "severity": "high",
+    "src_ip": "45.33.1.10",
+    "dst_asset": "API-PAY01",
+    "user": "merchant_77",
+    "msg": "Payment API volume 12x baseline"
+  },
+  {
+    "alert_id": "ALT-FN-004",
+    "ts": "2026-09-10T08:09:00Z",
+    "source": "siem",
+    "rule": "CI_SECRET_READ",
+    "severity": "medium",
+    "src_ip": "10.8.1.4",
+    "dst_asset": "CI-RUNNER",
+    "user": "github-actions",
+    "msg": "Unusual secret access on runner"
+  },
+  {
+    "alert_id": "ALT-FN-005",
+    "ts": "2026-09-10T08:12:00Z",
+    "source": "db",
+    "rule": "BULK_SELECT",
+    "severity": "critical",
+    "src_ip": "10.8.2.9",
+    "dst_asset": "DB-LEDGER",
+    "user": "app_pay",
+    "msg": "Bulk SELECT on cardholder tokens table"
+  },
+  {
+    "alert_id": "ALT-FN-006",
+    "ts": "2026-09-10T07:55:00Z",
+    "source": "waf",
+    "rule": "BOT_SCAN",
+    "severity": "low",
+    "src_ip": "198.51.100.7",
+    "dst_asset": "WEB-PORTAL",
+    "user": null,
+    "msg": "Generic bot noise"
+  }
+]

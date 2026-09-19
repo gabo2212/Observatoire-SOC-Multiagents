@@ -1,0 +1,14 @@
+{
+  "id": "acme_ransomware",
+  "name": "ACME — Précurseurs ransomware",
+  "description": "Shadow copy delete + lateral movement",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Prioriser avant impact ransomware sur fichiers/backup.",
+  "tags": [
+    "ransomware",
+    "edr",
+    "acme"
+  ],
+  "source": "bundled"
+}

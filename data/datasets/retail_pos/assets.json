@@ -1,0 +1,34 @@
+[
+  {
+    "asset_id": "POS-FLOOR12",
+    "hostname": "pos-12.retail-lab.test",
+    "type": "pos",
+    "criticality": 4,
+    "owner": "Magasin",
+    "zone": "store"
+  },
+  {
+    "asset_id": "POS-FLOOR13",
+    "hostname": "pos-13.retail-lab.test",
+    "type": "pos",
+    "criticality": 4,
+    "owner": "Magasin",
+    "zone": "store"
+  },
+  {
+    "asset_id": "ECOM-WEB",
+    "hostname": "shop.retail-lab.test",
+    "type": "web_server",
+    "criticality": 4,
+    "owner": "Ecommerce",
+    "zone": "dmz"
+  },
+  {
+    "asset_id": "PAY-GW",
+    "hostname": "paygw.retail-lab.test",
+    "type": "payment_gateway",
+    "criticality": 5,
+    "owner": "Finance",
+    "zone": "restricted"
+  }
+]

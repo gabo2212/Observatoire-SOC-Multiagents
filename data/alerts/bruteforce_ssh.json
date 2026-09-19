@@ -1,0 +1,8 @@
+[
+  {"alert_id": "ALT-BF-001", "ts": "2026-09-18T02:14:11Z", "source": "ids", "rule": "SSH_BRUTE_FORCE", "severity": "high", "src_ip": "203.0.113.44", "dst_asset": "VPN-GW01", "user": null, "msg": "312 failed SSH attempts in 4 minutes"},
+  {"alert_id": "ALT-BF-002", "ts": "2026-09-18T02:16:02Z", "source": "auth", "rule": "AUTH_FAILURE_BURST", "severity": "medium", "src_ip": "203.0.113.44", "dst_asset": "SRV-DC01", "user": "admin", "msg": "Repeated admin auth failures from external IP"},
+  {"alert_id": "ALT-BF-003", "ts": "2026-09-18T02:18:40Z", "source": "auth", "rule": "SUCCESS_AFTER_FAILURES", "severity": "critical", "src_ip": "203.0.113.44", "dst_asset": "SRV-DC01", "user": "svc_backup", "msg": "Successful login after 48 failures"},
+  {"alert_id": "ALT-BF-004", "ts": "2026-09-18T02:21:05Z", "source": "edr", "rule": "NEW_PRIV_PROCESS", "severity": "high", "src_ip": "10.0.0.11", "dst_asset": "SRV-DC01", "user": "svc_backup", "msg": "Unusual privileged process spawned by svc_backup"},
+  {"alert_id": "ALT-BF-005", "ts": "2026-09-18T02:25:33Z", "source": "ids", "rule": "SSH_BRUTE_FORCE", "severity": "medium", "src_ip": "198.51.100.9", "dst_asset": "VPN-GW01", "user": null, "msg": "Secondary source probing SSH"},
+  {"alert_id": "ALT-BF-006", "ts": "2026-09-18T02:30:12Z", "source": "siem", "rule": "GEO_ANOMALY", "severity": "low", "src_ip": "203.0.113.44", "dst_asset": "VPN-GW01", "user": "svc_backup", "msg": "Login geolocation never seen for account"}
+]

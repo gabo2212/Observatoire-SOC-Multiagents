@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.gguf
+data/traces/*.db
+data/traces/live/
+data/traces/live_status.json
+.DS_Store
+.streamlit/secrets.toml
+models/
+data/alerts/datasets/
+data/alerts/custom/
+data/inventory/dataset_overlay.json

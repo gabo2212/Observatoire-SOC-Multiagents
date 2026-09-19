@@ -1,0 +1,8 @@
+[
+  {"alert_id": "ALT-PH-001", "ts": "2026-09-17T09:02:00Z", "source": "email", "rule": "PHISH_LINK", "severity": "high", "src_ip": null, "dst_asset": "SRV-MAIL01", "user": "j.tremblay", "msg": "Credential harvest URL blocked for 14 recipients"},
+  {"alert_id": "ALT-PH-002", "ts": "2026-09-17T09:08:22Z", "source": "proxy", "rule": "SUSPICIOUS_DOMAIN", "severity": "medium", "src_ip": "10.2.4.88", "dst_asset": "WS-FIN-12", "user": "j.tremblay", "msg": "User clicked lookalike domain login.acme-lab-sso.com"},
+  {"alert_id": "ALT-PH-003", "ts": "2026-09-17T09:10:01Z", "source": "idp", "rule": "IMPOSSIBLE_TRAVEL", "severity": "critical", "src_ip": "45.77.12.90", "dst_asset": "SRV-DC01", "user": "j.tremblay", "msg": "OAuth token issued from new country within 8 minutes"},
+  {"alert_id": "ALT-PH-004", "ts": "2026-09-17T09:12:44Z", "source": "edr", "rule": "MFA_FATIGUE", "severity": "high", "src_ip": "45.77.12.90", "dst_asset": "WS-FIN-12", "user": "j.tremblay", "msg": "11 MFA push notifications in 3 minutes, 1 accepted"},
+  {"alert_id": "ALT-PH-005", "ts": "2026-09-17T09:20:10Z", "source": "email", "rule": "PHISH_LINK", "severity": "low", "src_ip": null, "dst_asset": "SRV-MAIL01", "user": "newsletter", "msg": "Marketing tracking domain previously marked low confidence"},
+  {"alert_id": "ALT-PH-006", "ts": "2026-09-17T09:25:00Z", "source": "dlp", "rule": "MAILBOX_FORWARD_RULE", "severity": "high", "src_ip": "45.77.12.90", "dst_asset": "SRV-MAIL01", "user": "j.tremblay", "msg": "Hidden inbox rule forwarding finance mail externally"}
+]

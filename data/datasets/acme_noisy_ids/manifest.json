@@ -1,0 +1,14 @@
+{
+  "id": "acme_noisy_ids",
+  "name": "ACME — IDS bruyant",
+  "description": "Faux positifs + webshell réelle",
+  "version": "1.0",
+  "schema_version": 1,
+  "mission": "Séparer le bruit IDS du signal critique (webshell).",
+  "tags": [
+    "ids",
+    "false-positive",
+    "acme"
+  ],
+  "source": "bundled"
+}
