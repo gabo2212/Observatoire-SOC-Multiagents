@@ -741,7 +741,7 @@ with tab_help:
 |---|---|
 | **Graphe des agents** | Qui parle à qui ? Qui est actif maintenant ? |
 | **Timeline** | Dans quel ordre et combien de temps chaque étape ? |
-| **Sankey** | Où circulent les jetons / messages ? |
+| **Sankey** | Où circulent sdsdsdles jetons / messages ? |
 | **Barres comparatives** | Quel agent coûte le plus (temps, jetons, erreurs) ? |
 | **Heatmap** | Quel couple scénario×agent est un goulot ? |
 | **KPI** | Santé globale du système en un coup d'œil |
