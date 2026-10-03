@@ -1,5 +1,4 @@
 # Observatoire SOC — Triage multiagents d'alertes (A5)
-# Claudia a ajouté un commentaire 
 
 Tableau de bord interactif + système multiagents pour **trier et prioriser des alertes de cybersécurité** à partir de **journaux 100 % synthétiques** (ACME-LAB).
 
