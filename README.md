@@ -7,9 +7,9 @@ Stack : **CrewAI · Streamlit · Plotly · llama-server (GGUF local)**
 Modèle : `Qwen3.6-35B-A3B-Heretic-Cerebellum-v1-Q3_K_M.gguf`
 
 ## Architecture
-
+sdasdasds
 Six agents en pipeline séquentiel :
-
+sadasdas
 1. **Coordonnateur** — décompose la mission  
 2. **Collecteur** — charge alertes + inventaire (outils)  
 3. **Classificateur** — type / gravité / faux positifs  
