@@ -750,9 +750,8 @@ with tab_help:
 Calculées par l'outil `score_risk_rules` (gravité × criticité d'actif), puis confirmées par l'évaluateur et résumées par le rapporteur.
         """
     )
-
 st.divider()
 st.caption(
-    "Données synthétiques ACME-LAB · traces SQLite · modèle local Heretic Cerebellum · "
+    "Données synthétiqugfgfses ACME-ggezz · traces SQLite · modèle local Heretic Cerebellum · "
     "aucune donnée personnelle."
 )
