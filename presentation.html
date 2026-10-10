@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Observatoire SOC — Comment ça marche</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ===========================================
+       VIEWPORT FITTING: MANDATORY BASE STYLES
+       =========================================== */
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-height: 100%;
+      overflow: hidden;
+      padding: var(--slide-padding);
+    }
+
+    :root {
+      --title-size: clamp(1.5rem, 5vw, 4rem);
+      --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+      --h3-size: clamp(1rem, 2.5vw, 1.75rem);
+      --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+      --small-size: clamp(0.65rem, 1vw, 0.875rem);
+
+      --slide-padding: clamp(1rem, 4vw, 4rem);
+      --content-gap: clamp(0.5rem, 2vw, 2rem);
+      --element-gap: clamp(0.25rem, 1vw, 1rem);
+
+      /* Electric Studio */
+      --bg: #0a0a0a;
+      --fg: #f5f5f5;
+      --muted: #a3a3a3;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.16);
+      --panel: #141414;
+      --line: #2a2a2a;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .slide {
+      background:
+        radial-gradient(ellipse 80% 50% at 100% 0%, var(--accent-soft), transparent 55%),
+        linear-gradient(180deg, #0f0f0f 0%, var(--bg) 55%);
+    }
+
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line) 1px, transparent 1px);
+      background-size: 64px 64px;
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    .slide-content {
+      position: relative;
+      z-index: 1;
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      gap: var(--content-gap);
+    }
+
+    .eyebrow {
+      font-size: var(--small-size);
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    h1 {
+      font-size: var(--title-size);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      max-width: 16ch;
+    }
+
+    h2 {
+      font-size: var(--h2-size);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .lede, .subtitle {
+      font-size: clamp(0.95rem, 1.8vw, 1.35rem);
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 42ch;
+    }
+
+    .bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.4rem, 1vh, 1rem);
+      max-width: 52ch;
+    }
+
+    .bullets li {
+      font-size: var(--body-size);
+      line-height: 1.4;
+      padding-left: 1.2em;
+      position: relative;
+    }
+
+    .bullets li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.55em;
+      width: 0.45em;
+      height: 0.45em;
+      background: var(--accent);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: clamp(1rem, 3vw, 3rem);
+      align-items: center;
+      width: 100%;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: clamp(0.85rem, 2vw, 1.5rem);
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--element-gap);
+    }
+
+    /* Title */
+    .title-slide .brand {
+      font-size: clamp(2rem, 7vw, 5.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      max-width: 12ch;
+    }
+
+    .title-slide .brand span {
+      color: var(--accent);
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.45rem 0.8rem;
+      font-size: var(--small-size);
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    /* Agent pipeline */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: clamp(0.35rem, 1vw, 0.75rem);
+      width: 100%;
+    }
+
+    .agent-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-top: 3px solid var(--agent-color, var(--accent));
+      padding: clamp(0.55rem, 1.2vw, 0.9rem);
+      min-height: clamp(5.5rem, 18vh, 9rem);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .agent-card .n {
+      font-size: var(--small-size);
+      font-weight: 800;
+      color: var(--agent-color, var(--accent));
+    }
+
+    .agent-card strong {
+      font-size: clamp(0.7rem, 1.1vw, 0.95rem);
+      line-height: 1.2;
+    }
+
+    .agent-card p {
+      font-size: clamp(0.62rem, 0.95vw, 0.8rem);
+      color: var(--muted);
+      line-height: 1.3;
+    }
+
+    /* Flow steps */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(0.5rem, 1.5vw, 1rem);
+      width: 100%;
+    }
+
+    .flow-step {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: clamp(0.7rem, 1.5vw, 1.15rem);
+      position: relative;
+    }
+
+    .flow-step .n {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .flow-step h3 {
+      font-size: clamp(0.8rem, 1.3vw, 1.05rem);
+      margin-bottom: 0.35rem;
+    }
+
+    .flow-step p {
+      font-size: clamp(0.65rem, 1.05vw, 0.85rem);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Tools vs LLM */
+    .duo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(0.75rem, 2vw, 1.5rem);
+      width: 100%;
+    }
+
+    .duo h3 {
+      font-size: var(--h3-size);
+      margin-bottom: 0.5rem;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: var(--small-size);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+      color: var(--accent);
+    }
+
+    .tag.warn { color: var(--warn); }
+    .tag.ok { color: var(--ok); }
+
+    .mono {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: clamp(0.68rem, 1.1vw, 0.9rem);
+      color: #d4d4d4;
+      line-height: 1.55;
+    }
+
+    /* Dashboard grid */
+    .viz-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(0.5rem, 1.4vw, 1rem);
+      width: 100%;
+    }
+
+    .viz-grid article {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: clamp(0.7rem, 1.4vw, 1.1rem);
+    }
+
+    .viz-grid h3 {
+      font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+      margin-bottom: 0.35rem;
+    }
+
+    .viz-grid p {
+      font-size: clamp(0.65rem, 1.05vw, 0.85rem);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Demo checklist */
+    .demo-list {
+      list-style: none;
+      display: grid;
+      gap: clamp(0.45rem, 1.2vh, 0.85rem);
+      width: min(640px, 100%);
+    }
+
+    .demo-list li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      padding: clamp(0.65rem, 1.3vw, 1rem);
+      font-size: var(--body-size);
+      line-height: 1.35;
+    }
+
+    .demo-list .n {
+      width: 1.7rem;
+      height: 1.7rem;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: white;
+      font-weight: 800;
+      font-size: var(--small-size);
+      flex-shrink: 0;
+    }
+
+    /* Closing */
+    .close-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(0.6rem, 1.5vw, 1.2rem);
+      width: 100%;
+    }
+
+    .close-points article {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      padding: clamp(0.8rem, 1.6vw, 1.25rem);
+    }
+
+    .close-points h3 {
+      font-size: clamp(0.9rem, 1.4vw, 1.15rem);
+      margin-bottom: 0.4rem;
+    }
+
+    .close-points p {
+      font-size: clamp(0.68rem, 1.1vw, 0.9rem);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    .slide.is-active .reveal {
+      opacity: 1;
+      transform: none;
+    }
+
+    .slide.is-active .reveal-d1 { transition-delay: 0.08s; }
+    .slide.is-active .reveal-d2 { transition-delay: 0.16s; }
+    .slide.is-active .reveal-d3 { transition-delay: 0.24s; }
+    .slide.is-active .reveal-d4 { transition-delay: 0.32s; }
+
+    /* Nav */
+    .progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: var(--accent);
+      width: 0;
+      z-index: 50;
+      transition: width 0.25s ease;
+    }
+
+    .nav-dots {
+      position: fixed;
+      right: clamp(0.6rem, 2vw, 1.25rem);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      z-index: 50;
+    }
+
+    .nav-dots button {
+      width: 9px;
+      height: 9px;
+      border-radius: 0;
+      border: 1px solid var(--muted);
+      background: transparent;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .nav-dots button[aria-current="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .keyboard-hint {
+      position: fixed;
+      bottom: clamp(0.5rem, 1.5vw, 1rem);
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: var(--small-size);
+      color: var(--muted);
+      z-index: 50;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    .slide-index {
+      position: fixed;
+      bottom: clamp(0.5rem, 1.5vw, 1rem);
+      right: clamp(0.75rem, 2vw, 1.5rem);
+      font-size: var(--small-size);
+      color: var(--muted);
+      font-weight: 600;
+      z-index: 50;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-height: 700px) {
+      :root {
+        --slide-padding: clamp(0.75rem, 3vw, 2rem);
+        --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+        --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+        --h2-size: clamp(1rem, 3vw, 1.75rem);
+      }
+    }
+
+    @media (max-height: 600px) {
+      :root {
+        --slide-padding: clamp(0.5rem, 2.5vw, 1.5rem);
+        --content-gap: clamp(0.3rem, 1vw, 0.75rem);
+        --title-size: clamp(1.1rem, 4vw, 2rem);
+        --body-size: clamp(0.7rem, 1.2vw, 0.95rem);
+      }
+
+      .nav-dots, .keyboard-hint, .decorative {
+        display: none;
+      }
+    }
+
+    @media (max-height: 500px) {
+      :root {
+        --slide-padding: clamp(0.4rem, 2vw, 1rem);
+        --title-size: clamp(1rem, 3.5vw, 1.5rem);
+        --h2-size: clamp(0.9rem, 2.5vw, 1.25rem);
+        --body-size: clamp(0.65rem, 1vw, 0.85rem);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .split, .duo, .flow, .pipeline, .viz-grid, .close-points {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .pipeline {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 600px) {
+      :root {
+        --title-size: clamp(1.25rem, 7vw, 2.5rem);
+      }
+
+      .split, .duo, .flow, .pipeline, .viz-grid, .close-points {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-dots { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+      }
+
+      html { scroll-behavior: auto; }
+
+      .reveal {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <nav class="nav-dots" id="navDots" aria-label="Navigation des diapositives"></nav>
+  <div class="slide-index" id="slideIndex" aria-live="polite">1 / 8</div>
+  <div class="keyboard-hint">← → ou molette pour naviguer</div>
+
+  <main id="deck">
+    <!-- 1. Title -->
+    <section class="slide title-slide is-active" data-slide="0" aria-label="Titre">
+      <div class="slide-content">
+        <p class="eyebrow reveal">420-VD2-ID · A5</p>
+        <h1 class="brand reveal reveal-d1">Observatoire<br /><span>SOC</span></h1>
+        <p class="subtitle reveal reveal-d2">
+          Comment 6 agents trient des alertes cyber — du log au brief P1/P2/P3.
+        </p>
+        <div class="cta-row reveal reveal-d3">
+          <span class="pill">CrewAI</span>
+          <span class="pill">LLM local</span>
+          <span class="pill">Streamlit</span>
+          <span class="pill">Traces SQLite</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Problem -->
+    <section class="slide" data-slide="1" aria-label="Problème">
+      <div class="slide-content">
+        <div class="split">
+          <div class="stack">
+            <p class="eyebrow reveal">Le problème</p>
+            <h2 class="reveal reveal-d1">Trop d’alertes,<br />trop peu de temps</h2>
+            <p class="lede reveal reveal-d2">
+              Un SOC doit décider vite : quoi prioriser, quoi ignorer, quoi corréler.
+            </p>
+          </div>
+          <ul class="bullets reveal reveal-d3">
+            <li>Volume élevé → fatigue de l’analyste</li>
+            <li>Un seul chatbot mélange tout (collecte, score, rapport)</li>
+            <li>Besoin de voir <em>qui</em> fait quoi, combien ça coûte, où ça rame</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Solution -->
+    <section class="slide" data-slide="2" aria-label="Solution">
+      <div class="slide-content">
+        <div class="stack" style="margin-bottom: var(--element-gap);">
+          <p class="eyebrow reveal">La solution</p>
+          <h2 class="reveal reveal-d1">Un pipeline séquentiel, pas un chatbot</h2>
+          <p class="lede reveal reveal-d2">Chaque agent a un seul job. Le suivant reçoit le contexte et continue.</p>
+        </div>
+        <div class="pipeline reveal reveal-d3">
+          <article class="agent-card" style="--agent-color:#2563eb">
+            <span class="n">01</span>
+            <strong>Coordonnateur</strong>
+            <p>Découpe la mission</p>
+          </article>
+          <article class="agent-card" style="--agent-color:#0891b2">
+            <span class="n">02</span>
+            <strong>Collecteur</strong>
+            <p>Alertes + inventaire</p>
+          </article>
+          <article class="agent-card" style="--agent-color:#7c3aed">
+            <span class="n">03</span>
+            <strong>Classificateur</strong>
+            <p>Type / gravité / FP</p>
+          </article>
+          <article class="agent-card" style="--agent-color:#c2410c">
+            <span class="n">04</span>
+            <strong>Corrélateur</strong>
+            <p>Campagnes & chaînes</p>
+          </article>
+          <article class="agent-card" style="--agent-color:#b91c1c">
+            <span class="n">05</span>
+            <strong>Évaluateur</strong>
+            <p>Score risque + check</p>
+          </article>
+          <article class="agent-card" style="--agent-color:#047857">
+            <span class="n">06</span>
+            <strong>Rapporteur</strong>
+            <p>Brief P1 / P2 / P3</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. One run lifecycle -->
+    <section class="slide" data-slide="3" aria-label="Cycle d'une mission">
+      <div class="slide-content">
+        <div class="stack" style="margin-bottom: var(--element-gap);">
+          <p class="eyebrow reveal">Une mission, de A à Z</p>
+          <h2 class="reveal reveal-d1">Ce qui se passe quand vous lancez un run</h2>
+        </div>
+        <div class="flow reveal reveal-d2">
+          <article class="flow-step">
+            <div class="n">1</div>
+            <h3>Mission</h3>
+            <p>Scénario choisi (ex. ransomware) ou sites perso. Run ID créé en SQLite.</p>
+          </article>
+          <article class="flow-step">
+            <div class="n">2</div>
+            <h3>Outils</h3>
+            <p>Lecture des logs, inventaire des actifs, score règles — avant les LLM.</p>
+          </article>
+          <article class="flow-step">
+            <div class="n">3</div>
+            <h3>Relais agents</h3>
+            <p>6 étapes CrewAI séquentielles. Chaque sortie alimente la suivante.</p>
+          </article>
+          <article class="flow-step">
+            <div class="n">4</div>
+            <h3>Brief + traces</h3>
+            <p>Rapport final + métriques (durée, jetons, outils, qualité) pour le dashboard.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Tools vs LLM -->
+    <section class="slide" data-slide="4" aria-label="Outils et LLM">
+      <div class="slide-content">
+        <div class="stack" style="margin-bottom: var(--element-gap);">
+          <p class="eyebrow reveal">Deux moteurs</p>
+          <h2 class="reveal reveal-d1">Outils déterministes + LLM local</h2>
+        </div>
+        <div class="duo reveal reveal-d2">
+          <article class="panel">
+            <span class="tag ok">Outils (≥3)</span>
+            <h3>Faits, pas d’invention</h3>
+            <p class="mono">
+              parse_alert_log<br />
+              lookup_asset_inventory<br />
+              score_risk_rules
+            </p>
+            <p style="margin-top:0.75rem;font-size:var(--body-size);color:var(--muted);line-height:1.4;">
+              Instantanés. Donnent le socle factuel (alertes, criticité, P1/P2/P3 règles).
+            </p>
+          </article>
+          <article class="panel">
+            <span class="tag warn">LLM</span>
+            <h3>Raisonnement & rédaction</h3>
+            <p class="mono">
+              llama-server · GGUF local<br />
+              Qwen3.6-35B-A3B…<br />
+              API OpenAI-compatible :8080
+            </p>
+            <p style="margin-top:0.75rem;font-size:var(--body-size);color:var(--muted);line-height:1.4;">
+              Plan, synthèse, corrélation narrative, brief. Mode offline = outils + synthèse déterministe.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Dashboard -->
+    <section class="slide" data-slide="5" aria-label="Dashboard">
+      <div class="slide-content">
+        <div class="stack" style="margin-bottom: var(--element-gap);">
+          <p class="eyebrow reveal">Observabilité</p>
+          <h2 class="reveal reveal-d1">Le dashboard montre le travail des agents</h2>
+          <p class="lede reveal reveal-d2">Streamlit + Plotly · traces dans <span class="mono">data/traces/observatory.db</span></p>
+        </div>
+        <div class="viz-grid reveal reveal-d3">
+          <article>
+            <h3>Live</h3>
+            <p>Checklist des 6 agents + graphe : qui est actif pendant le run.</p>
+          </article>
+          <article>
+            <h3>KPI</h3>
+            <p>Durée, jetons, succès, qualité — santé du système d’un coup d’œil.</p>
+          </article>
+          <article>
+            <h3>Timeline</h3>
+            <p>Ordre et durée de chaque étape agent.</p>
+          </article>
+          <article>
+            <h3>Sankey</h3>
+            <p>Circulation des messages / jetons entre agents.</p>
+          </article>
+          <article>
+            <h3>Heatmap</h3>
+            <p>Latence ou erreurs : scénario × agent.</p>
+          </article>
+          <article>
+            <h3>Comparaison</h3>
+            <p>Deux runs côte à côte pour voir ce qui change.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Demo path -->
+    <section class="slide" data-slide="6" aria-label="Démo">
+      <div class="slide-content">
+        <div class="split">
+          <div class="stack">
+            <p class="eyebrow reveal">Pour présenter</p>
+            <h2 class="reveal reveal-d1">Parcours démo en 4 gestes</h2>
+            <p class="lede reveal reveal-d2">Données 100 % synthétiques ACME-LAB — aucun log réel.</p>
+          </div>
+          <ol class="demo-list reveal reveal-d3">
+            <li><span class="n">1</span><span>Démarrer le LLM local, puis <strong>streamlit run dashboard/app.py</strong></span></li>
+            <li><span class="n">2</span><span>Lancer un scénario (ex. précurseurs ransomware) depuis l’onglet Lancer</span></li>
+            <li><span class="n">3</span><span>Montrer le relais live : agent actif → brief P1</span></li>
+            <li><span class="n">4</span><span>Rejouer au slider + comparer deux runs</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Takeaways -->
+    <section class="slide" data-slide="7" aria-label="À retenir">
+      <div class="slide-content">
+        <div class="stack" style="margin-bottom: var(--element-gap);">
+          <p class="eyebrow reveal">À retenir</p>
+          <h2 class="reveal reveal-d1">Ce que le projet démontre</h2>
+        </div>
+        <div class="close-points reveal reveal-d2">
+          <article>
+            <h3>Spécialisation</h3>
+            <p>6 rôles clairs battent un agent unique qui fait tout mal.</p>
+          </article>
+          <article>
+            <h3>Transparence</h3>
+            <p>Chaque étape est tracée : on voit le goulot (souvent l’évaluateur / LLM).</p>
+          </article>
+          <article>
+            <h3>Actionnable</h3>
+            <p>Sortie = priorités P1/P2/P3 + actions, pas un pavé de chat.</p>
+          </article>
+        </div>
+        <p class="subtitle reveal reveal-d3" style="margin-top: var(--content-gap);">
+          Questions ?
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const progress = document.getElementById("progress");
+      const slideIndex = document.getElementById("slideIndex");
+      const navDots = document.getElementById("navDots");
+      let current = 0;
+      let wheelLock = false;
+
+      slides.forEach((_, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.setAttribute("aria-label", "Aller à la diapositive " + (i + 1));
+        btn.addEventListener("click", () => goTo(i));
+        navDots.appendChild(btn);
+      });
+
+      const dots = Array.from(navDots.querySelectorAll("button"));
+
+      function goTo(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides[current].scrollIntoView({ behavior: "smooth", block: "start" });
+        updateUI();
+      }
+
+      function updateUI() {
+        slides.forEach((s, i) => s.classList.toggle("is-active", i === current));
+        dots.forEach((d, i) => d.setAttribute("aria-current", i === current ? "true" : "false"));
+        progress.style.width = ((current + 1) / slides.length) * 100 + "%";
+        slideIndex.textContent = current + 1 + " / " + slides.length;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              current = Number(entry.target.dataset.slide);
+              updateUI();
+            }
+          });
+        },
+        { threshold: 0.6 }
+      );
+      slides.forEach((s) => observer.observe(s));
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+          e.preventDefault();
+          goTo(current + 1);
+        } else if (e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "PageUp") {
+          e.preventDefault();
+          goTo(current - 1);
+        } else if (e.key === "Home") {
+          e.preventDefault();
+          goTo(0);
+        } else if (e.key === "End") {
+          e.preventDefault();
+          goTo(slides.length - 1);
+        }
+      });
+
+      window.addEventListener(
+        "wheel",
+        (e) => {
+          if (Math.abs(e.deltaY) < 20 || wheelLock) return;
+          wheelLock = true;
+          goTo(current + (e.deltaY > 0 ? 1 : -1));
+          setTimeout(() => { wheelLock = false; }, 650);
+        },
+        { passive: true }
+      );
+
+      let touchY = null;
+      window.addEventListener("touchstart", (e) => {
+        touchY = e.changedTouches[0].clientY;
+      }, { passive: true });
+      window.addEventListener("touchend", (e) => {
+        if (touchY == null) return;
+        const dy = touchY - e.changedTouches[0].clientY;
+        if (Math.abs(dy) > 40) goTo(current + (dy > 0 ? 1 : -1));
+        touchY = null;
+      }, { passive: true });
+
+      updateUI();
+    })();
+  </script>
+</body>
+</html>
