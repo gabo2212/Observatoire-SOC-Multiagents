@@ -423,6 +423,20 @@
       transition: width 0.25s ease;
     }
 
+    .home-link {
+      position: fixed;
+      top: clamp(0.75rem, 2vw, 1.25rem);
+      left: clamp(0.75rem, 2vw, 1.5rem);
+      z-index: 40;
+      color: var(--muted);
+      font-size: var(--small-size);
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .home-link:hover { color: var(--fg); }
+
     .nav-dots {
       position: fixed;
       right: clamp(0.6rem, 2vw, 1.25rem);
@@ -541,6 +555,7 @@
   </style>
 </head>
 <body>
+  <a href="/" class="home-link" aria-label="Retour à l'accueil">← Accueil</a>
   <div class="progress" id="progress" aria-hidden="true"></div>
   <nav class="nav-dots" id="navDots" aria-label="Navigation des diapositives"></nav>
   <div class="slide-index" id="slideIndex" aria-live="polite">1 / 8</div>

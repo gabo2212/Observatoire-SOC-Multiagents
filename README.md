@@ -103,11 +103,21 @@ scripts/          # download, start_llm, run_*, export
 - Pas de données personnelles : alertes et inventaire fictifs.  
 - Pas de demande de « raisonnement interne détaillé » au modèle ; sorties = tâches, outils, résultats.
 
+## Site Vercel (slides + aperçu)
+
+Déploiement statique : page d’accueil + deck HTML.
+
+- Accueil : `/` (`index.html`)
+- Slides : `/presentation` (`presentation.html`)
+
+Le dashboard Streamlit et le LLM local **ne tournent pas** sur Vercel — uniquement en local (GPU).
+
 ## Documentation
 
 - [docs/rapport.md](docs/rapport.md) — rapport complet  
 - [docs/presentation_outline.md](docs/presentation_outline.md) — démo 10–12 min  
 - [docs/checklist.md](docs/checklist.md) — grille / liste de vérification  
+- [presentation.html](presentation.html) — deck HTML (8 slides)  
 
 ## Licence pédagogique
 
