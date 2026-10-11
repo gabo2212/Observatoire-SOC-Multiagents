@@ -107,8 +107,9 @@ scripts/          # download, start_llm, run_*, export
 
 Déploiement statique : page d’accueil + deck HTML.
 
+- **Live** : https://observatoire-soc-static.vercel.app/
 - Accueil : `/` (`index.html`)
-- Slides : `/presentation` (`presentation.html`)
+- Slides : https://observatoire-soc-static.vercel.app/presentation
 
 Le dashboard Streamlit et le LLM local **ne tournent pas** sur Vercel — uniquement en local (GPU).
 
