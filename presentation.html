@@ -368,7 +368,7 @@
       flex-shrink: 0;
     }
 
-    /* Meme / avatar accents */
+    /* Meme / avatar accents — large on purpose */
     .meme {
       display: block;
       object-fit: cover;
@@ -377,25 +377,35 @@
     }
 
     .meme-hero {
-      width: min(280px, 32vw);
+      width: min(48vw, 520px);
+      flex: 1 1 42%;
       aspect-ratio: 1;
-      max-height: min(38vh, 280px);
-      transform: rotate(-2deg);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      max-height: min(72vh, 560px);
+      height: min(72vh, 560px);
+      transform: rotate(-1.5deg);
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.55);
     }
 
     .meme-side {
-      width: min(220px, 28vw);
+      width: 100%;
       aspect-ratio: 1;
-      max-height: min(32vh, 220px);
-      margin-left: auto;
-      transform: rotate(2.5deg);
-      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+      max-height: min(52vh, 420px);
+      height: min(52vh, 420px);
+      transform: rotate(1.5deg);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .meme-wide {
+      width: 100%;
+      max-height: min(42vh, 360px);
+      height: min(42vh, 360px);
+      object-fit: cover;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
     }
 
     .meme-inline {
-      width: 72px;
-      height: 72px;
+      width: clamp(96px, 14vw, 140px);
+      height: clamp(96px, 14vw, 140px);
       border-radius: 4px;
       flex-shrink: 0;
     }
@@ -403,36 +413,47 @@
     .agent-card .meme-avatar {
       width: 100%;
       aspect-ratio: 1;
-      max-height: 72px;
-      margin-bottom: 0.15rem;
+      max-height: min(18vh, 140px);
+      height: min(18vh, 140px);
+      margin-bottom: 0.2rem;
       object-fit: cover;
     }
 
     .meme-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      align-items: center;
+      flex-wrap: nowrap;
+      gap: clamp(0.5rem, 1.2vw, 1rem);
+      align-items: stretch;
+      width: 100%;
       margin-top: var(--element-gap);
     }
 
     .meme-row .meme {
-      width: clamp(64px, 10vw, 96px);
-      height: clamp(64px, 10vw, 96px);
+      flex: 1 1 0;
+      width: auto;
+      height: min(28vh, 220px);
+      min-width: 0;
       transform: rotate(var(--tilt, 0deg));
+    }
+
+    .meme-row.meme-row-lg .meme {
+      height: min(38vh, 300px);
     }
 
     .panel-with-meme {
       display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.75rem;
-      align-items: start;
+      grid-template-columns: 1fr minmax(140px, 38%);
+      gap: 0.85rem;
+      align-items: stretch;
     }
 
     .panel-with-meme .meme {
-      width: 88px;
-      height: 88px;
-      transform: rotate(3deg);
+      width: 100%;
+      height: 100%;
+      min-height: min(28vh, 220px);
+      max-height: min(36vh, 280px);
+      transform: none;
+      align-self: stretch;
     }
 
     .title-slide .slide-content {
@@ -447,6 +468,23 @@
       flex-direction: column;
       gap: var(--content-gap);
       min-width: 0;
+      flex: 0 1 46%;
+    }
+
+    .split-visual {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: clamp(1rem, 3vw, 2.5rem);
+      align-items: center;
+      width: 100%;
+    }
+
+    .split-visual .meme-stage {
+      width: 100%;
+      min-height: min(58vh, 480px);
+      height: min(58vh, 480px);
+      object-fit: cover;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
     }
 
     /* Closing */
@@ -599,7 +637,7 @@
     }
 
     @media (max-width: 900px) {
-      .split, .duo, .flow, .pipeline, .viz-grid, .close-points {
+      .split, .duo, .flow, .pipeline, .viz-grid, .close-points, .split-visual {
         grid-template-columns: 1fr 1fr;
       }
 
@@ -609,15 +647,29 @@
 
       .title-slide .slide-content {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
       }
 
+      .title-copy { flex: 1 1 auto; }
+
       .meme-hero {
-        align-self: flex-end;
+        width: 100%;
+        max-height: min(42vh, 360px);
+        height: min(42vh, 360px);
+        align-self: stretch;
       }
 
       .panel-with-meme {
+        grid-template-columns: 1fr minmax(120px, 34%);
+      }
+
+      .split-visual {
         grid-template-columns: 1fr;
+      }
+
+      .split-visual .meme-stage {
+        min-height: min(36vh, 280px);
+        height: min(36vh, 280px);
       }
     }
 
@@ -626,18 +678,34 @@
         --title-size: clamp(1.25rem, 7vw, 2.5rem);
       }
 
-      .split, .duo, .flow, .pipeline, .viz-grid, .close-points {
+      .split, .duo, .flow, .pipeline, .viz-grid, .close-points, .split-visual {
         grid-template-columns: 1fr;
       }
 
       .nav-dots { display: none; }
 
-      .meme-side, .meme-hero {
-        display: none;
+      .meme-hero, .meme-side, .meme-wide, .split-visual .meme-stage {
+        max-height: min(34vh, 260px);
+        height: min(34vh, 260px);
       }
 
       .agent-card .meme-avatar {
-        max-height: 56px;
+        max-height: min(14vh, 100px);
+        height: min(14vh, 100px);
+      }
+
+      .meme-row .meme,
+      .meme-row.meme-row-lg .meme {
+        height: min(18vh, 140px);
+      }
+
+      .panel-with-meme {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-with-meme .meme {
+        min-height: min(22vh, 180px);
+        max-height: min(26vh, 200px);
       }
     }
 
@@ -680,27 +748,27 @@
             <span class="pill">Traces SQLite</span>
           </div>
         </div>
-        <img class="meme meme-hero reveal reveal-d2" src="assets/memes/dream-girl.jpg" alt="" width="280" height="280" />
+        <img class="meme meme-hero reveal reveal-d2" src="assets/memes/white-smile.png" alt="" width="520" height="520" />
       </div>
     </section>
 
     <!-- 2. Problem -->
     <section class="slide" data-slide="1" aria-label="Problème">
       <div class="slide-content">
-        <div class="split">
+        <div class="split-visual">
           <div class="stack">
             <p class="eyebrow reveal">Le problème</p>
             <h2 class="reveal reveal-d1">Trop d’alertes,<br />trop peu de temps</h2>
             <p class="lede reveal reveal-d2">
               Un SOC doit décider vite : quoi prioriser, quoi ignorer, quoi corréler.
             </p>
-            <img class="meme meme-side reveal reveal-d3" src="assets/memes/baby.jpg" alt="" width="220" height="220" />
+            <ul class="bullets reveal reveal-d3">
+              <li>Volume élevé → fatigue de l’analyste</li>
+              <li>Un seul chatbot mélange tout (collecte, score, rapport)</li>
+              <li>Besoin de voir <em>qui</em> fait quoi, combien ça coûte, où ça rame</li>
+            </ul>
           </div>
-          <ul class="bullets reveal reveal-d3">
-            <li>Volume élevé → fatigue de l’analyste</li>
-            <li>Un seul chatbot mélange tout (collecte, score, rapport)</li>
-            <li>Besoin de voir <em>qui</em> fait quoi, combien ça coûte, où ça rame</li>
-          </ul>
+          <img class="meme meme-stage reveal reveal-d2" src="assets/memes/desk-crash.png" alt="" width="640" height="480" />
         </div>
       </div>
     </section>
@@ -715,37 +783,37 @@
         </div>
         <div class="pipeline reveal reveal-d3">
           <article class="agent-card" style="--agent-color:#2563eb">
-            <img class="meme meme-avatar" src="assets/memes/agent-blue.jpg" alt="" width="72" height="72" />
+            <img class="meme meme-avatar" src="assets/memes/agent-blue.jpg" alt="" width="140" height="140" />
             <span class="n">01</span>
             <strong>Coordonnateur</strong>
             <p>Découpe la mission</p>
           </article>
           <article class="agent-card" style="--agent-color:#0891b2">
-            <img class="meme meme-avatar" src="assets/memes/flat-top.jpg" alt="" width="72" height="72" />
+            <img class="meme meme-avatar" src="assets/memes/beard-glasses.png" alt="" width="140" height="140" />
             <span class="n">02</span>
             <strong>Collecteur</strong>
             <p>Alertes + inventaire</p>
           </article>
           <article class="agent-card" style="--agent-color:#7c3aed">
-            <img class="meme meme-avatar" src="assets/memes/ayanokoji.jpg" alt="" width="72" height="72" />
+            <img class="meme meme-avatar" src="assets/memes/ayanokoji.jpg" alt="" width="140" height="140" />
             <span class="n">03</span>
             <strong>Classificateur</strong>
             <p>Type / gravité / FP</p>
           </article>
           <article class="agent-card" style="--agent-color:#c2410c">
-            <img class="meme meme-avatar" src="assets/memes/dream-girl.jpg" alt="" width="72" height="72" />
+            <img class="meme meme-avatar" src="assets/memes/dream-girl.jpg" alt="" width="140" height="140" />
             <span class="n">04</span>
             <strong>Corrélateur</strong>
             <p>Campagnes & chaînes</p>
           </article>
           <article class="agent-card" style="--agent-color:#b91c1c">
-            <img class="meme meme-avatar" src="assets/memes/baby.jpg" alt="" width="72" height="72" />
+            <img class="meme meme-avatar" src="assets/memes/white-smile.png" alt="" width="140" height="140" />
             <span class="n">05</span>
             <strong>Évaluateur</strong>
             <p>Score risque + check</p>
           </article>
           <article class="agent-card" style="--agent-color:#047857">
-            <img class="meme meme-avatar" src="assets/memes/flat-top.jpg" alt="" width="72" height="72" />
+            <img class="meme meme-avatar" src="assets/memes/flat-top.jpg" alt="" width="140" height="140" />
             <span class="n">06</span>
             <strong>Rapporteur</strong>
             <p>Brief P1 / P2 / P3</p>
@@ -760,12 +828,13 @@
         <div class="stack" style="margin-bottom: var(--element-gap);">
           <p class="eyebrow reveal">Une mission, de A à Z</p>
           <h2 class="reveal reveal-d1">Ce qui se passe quand vous lancez un run</h2>
-          <div class="meme-row reveal reveal-d2">
-            <img class="meme" style="--tilt:4deg" src="assets/memes/flat-top.jpg" alt="" width="96" height="96" />
-            <img class="meme" style="--tilt:-3deg" src="assets/memes/agent-blue.jpg" alt="" width="96" height="96" />
+          <div class="meme-row meme-row-lg reveal reveal-d2">
+            <img class="meme" style="--tilt:2deg" src="assets/memes/beard-glasses.png" alt="" width="300" height="300" />
+            <img class="meme" style="--tilt:-2deg" src="assets/memes/baby.jpg" alt="" width="300" height="300" />
+            <img class="meme" style="--tilt:1deg" src="assets/memes/flat-top.jpg" alt="" width="300" height="300" />
           </div>
         </div>
-        <div class="flow reveal reveal-d2">
+        <div class="flow reveal reveal-d3">
           <article class="flow-step">
             <div class="n">1</div>
             <h3>Mission</h3>
@@ -811,7 +880,7 @@
                 Instantanés. Donnent le socle factuel (alertes, criticité, P1/P2/P3 règles).
               </p>
             </div>
-            <img class="meme" src="assets/memes/flat-top.jpg" alt="" width="88" height="88" />
+            <img class="meme" src="assets/memes/desk-crash.png" alt="" width="280" height="280" />
           </article>
           <article class="panel panel-with-meme">
             <div>
@@ -826,7 +895,7 @@
                 Plan, synthèse, corrélation narrative, brief. Mode offline = outils + synthèse déterministe.
               </p>
             </div>
-            <img class="meme" src="assets/memes/agent-blue.jpg" alt="" width="88" height="88" />
+            <img class="meme" src="assets/memes/white-smile.png" alt="" width="280" height="280" />
           </article>
         </div>
       </div>
@@ -839,10 +908,10 @@
           <p class="eyebrow reveal">Observabilité</p>
           <h2 class="reveal reveal-d1">Le dashboard montre le travail des agents</h2>
           <p class="lede reveal reveal-d2">Streamlit + Plotly · traces dans <span class="mono">data/traces/observatory.db</span></p>
-          <div class="meme-row reveal reveal-d3">
-            <img class="meme" style="--tilt:-4deg" src="assets/memes/ayanokoji.jpg" alt="" width="96" height="96" />
-            <img class="meme" style="--tilt:3deg" src="assets/memes/baby.jpg" alt="" width="96" height="96" />
-            <img class="meme" style="--tilt:-2deg" src="assets/memes/dream-girl.jpg" alt="" width="96" height="96" />
+          <div class="meme-row meme-row-lg reveal reveal-d3">
+            <img class="meme" style="--tilt:-2deg" src="assets/memes/ayanokoji.jpg" alt="" width="300" height="300" />
+            <img class="meme" style="--tilt:2deg" src="assets/memes/beard-glasses.png" alt="" width="300" height="300" />
+            <img class="meme" style="--tilt:-1deg" src="assets/memes/dream-girl.jpg" alt="" width="300" height="300" />
           </div>
         </div>
         <div class="viz-grid reveal reveal-d3">
@@ -877,19 +946,19 @@
     <!-- 7. Demo path -->
     <section class="slide" data-slide="6" aria-label="Démo">
       <div class="slide-content">
-        <div class="split">
+        <div class="split-visual">
           <div class="stack">
             <p class="eyebrow reveal">Pour présenter</p>
             <h2 class="reveal reveal-d1">Parcours démo en 4 gestes</h2>
             <p class="lede reveal reveal-d2">Données 100 % synthétiques ACME-LAB — aucun log réel.</p>
-            <img class="meme meme-side reveal reveal-d3" src="assets/memes/ayanokoji.jpg" alt="" width="220" height="220" />
+            <ol class="demo-list reveal reveal-d3">
+              <li><span class="n">1</span><span>Démarrer le LLM local, puis <strong>streamlit run dashboard/app.py</strong></span></li>
+              <li><span class="n">2</span><span>Lancer un scénario (ex. précurseurs ransomware) depuis l’onglet Lancer</span></li>
+              <li><span class="n">3</span><span>Montrer le relais live : agent actif → brief P1</span></li>
+              <li><span class="n">4</span><span>Rejouer au slider + comparer deux runs</span></li>
+            </ol>
           </div>
-          <ol class="demo-list reveal reveal-d3">
-            <li><span class="n">1</span><span>Démarrer le LLM local, puis <strong>streamlit run dashboard/app.py</strong></span></li>
-            <li><span class="n">2</span><span>Lancer un scénario (ex. précurseurs ransomware) depuis l’onglet Lancer</span></li>
-            <li><span class="n">3</span><span>Montrer le relais live : agent actif → brief P1</span></li>
-            <li><span class="n">4</span><span>Rejouer au slider + comparer deux runs</span></li>
-          </ol>
+          <img class="meme meme-stage reveal reveal-d2" src="assets/memes/ayanokoji.jpg" alt="" width="640" height="480" />
         </div>
       </div>
     </section>
@@ -901,27 +970,24 @@
           <p class="eyebrow reveal">À retenir</p>
           <h2 class="reveal reveal-d1">Ce que le projet démontre</h2>
         </div>
-        <div class="close-points reveal reveal-d2">
+        <div class="meme-row meme-row-lg reveal reveal-d2" style="margin-bottom: var(--content-gap);">
+          <img class="meme" style="--tilt:-2deg" src="assets/memes/white-smile.png" alt="" width="320" height="320" />
+          <img class="meme" style="--tilt:2deg" src="assets/memes/beard-glasses.png" alt="" width="320" height="320" />
+          <img class="meme" style="--tilt:-1deg" src="assets/memes/desk-crash.png" alt="" width="320" height="320" />
+        </div>
+        <div class="close-points reveal reveal-d3">
           <article>
-            <img class="meme meme-inline" src="assets/memes/agent-blue.jpg" alt="" width="72" height="72" style="margin-bottom:0.5rem;" />
             <h3>Spécialisation</h3>
             <p>6 rôles clairs battent un agent unique qui fait tout mal.</p>
           </article>
           <article>
-            <img class="meme meme-inline" src="assets/memes/flat-top.jpg" alt="" width="72" height="72" style="margin-bottom:0.5rem;" />
             <h3>Transparence</h3>
             <p>Chaque étape est tracée : on voit le goulot (souvent l’évaluateur / LLM).</p>
           </article>
           <article>
-            <img class="meme meme-inline" src="assets/memes/dream-girl.jpg" alt="" width="72" height="72" style="margin-bottom:0.5rem;" />
             <h3>Actionnable</h3>
-            <p>Sortie = priorités P1/P2/P3 + actions, pas un pavé de chat.</p>
+            <p>Sortie = priorités P1/P2/P3 + actions, pas un pavé de chat. Questions ?</p>
           </article>
-        </div>
-        <div class="meme-row reveal reveal-d3" style="margin-top: var(--content-gap);">
-          <img class="meme" style="--tilt:-3deg" src="assets/memes/ayanokoji.jpg" alt="" width="96" height="96" />
-          <img class="meme" style="--tilt:2deg" src="assets/memes/baby.jpg" alt="" width="96" height="96" />
-          <p class="subtitle" style="margin:0;">Questions ?</p>
         </div>
       </div>
     </section>
