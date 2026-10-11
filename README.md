@@ -27,24 +27,39 @@ Traces structurées → SQLite `data/traces/observatory.db` → dashboard Stream
 
 ## Prérequis
 
-- Linux + GPU NVIDIA recommandée (testé RTX 4080 12 Go)  
+- Linux ou macOS (GPU NVIDIA recommandée sur Linux ; testé RTX 4080 12 Go)  
 - Python **3.12** (`uv` ou pyenv)  
-- `llama-server` (llama.cpp) dans le PATH  
+- `curl` + accès réseau (Hugging Face + GitHub releases)  
 - ~12 Go disque pour le GGUF  
 
-## Installation
+`llama-server` est installé automatiquement dans `./bin` par le script d’installation (sinon fournir un binaire dans le PATH).
+
+## Installation (clone → LLM prêt)
+
+Après `git clone`, une seule commande installe le venv Python, crée `.env`, télécharge le GGUF et place `llama-server` dans `./bin` :
 
 ```bash
 cd Observatoire-SOC-Multiagents
+bash scripts/setup.sh
+source .venv/bin/activate
+```
+
+Options utiles :
+
+```bash
+SKIP_MODEL=1 bash scripts/setup.sh   # deps + llama-server seulement
+SKIP_LLAMA=1 bash scripts/setup.sh   # deps + modèle seulement
+FORCE_LLAMA=1 bash scripts/setup.sh  # re-télécharger llama-server
+```
+
+Étapes manuelles (équivalent) :
+
+```bash
 uv venv --python python3.12 .venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
 cp .env.example .env
-```
-
-Télécharger le modèle (si absent) :
-
-```bash
+bash scripts/install_llama_server.sh
 bash scripts/download_model.sh
 ```
 
@@ -93,7 +108,7 @@ data/alerts/      # journaux synthétiques (5 scénarios)
 data/inventory/   # actifs ACME-LAB
 data/traces/      # observatory.db + export JSON
 docs/             # rapport + plan de présentation
-scripts/          # download, start_llm, run_*, export
+scripts/          # setup, download_model, install_llama_server, start_llm, run_*
 ```
 
 ## Sécurité / confidentialité
