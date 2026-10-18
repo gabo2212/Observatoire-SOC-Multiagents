@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Observatoire SOC — frontend and backend</title>
+  <style>
+    :root {
+      --fg: #f0f0f0;
+      --fg-2: rgba(240, 240, 240, 0.74);
+      --fg-3: rgba(240, 240, 240, 0.6);
+      --fg-4: rgba(240, 240, 240, 0.36);
+      --bg: #181818;
+      --chrome: #141414;
+      --fill: rgba(240, 240, 240, 0.08);
+      --fill-2: rgba(240, 240, 240, 0.06);
+      --stroke: rgba(240, 240, 240, 0.2);
+      --stroke-2: rgba(240, 240, 240, 0.12);
+      --stroke-3: rgba(240, 240, 240, 0.08);
+      --accent: #599ce7;
+      --info: rgba(89, 156, 231, 0.12);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--bg); color: var(--fg); }
+    body {
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 20px;
+      padding: 28px 32px 64px;
+    }
+    main { max-width: 1100px; }
+    h1 { font-size: 24px; line-height: 30px; font-weight: 590; margin: 0 0 8px; }
+    h2 { font-size: 18px; line-height: 24px; font-weight: 590; margin: 0 0 8px; }
+    h3 { font-size: 16px; line-height: 22px; font-weight: 590; margin: 8px 0; }
+    p { margin: 0 0 8px; }
+    .muted { color: var(--fg-2); }
+    .small { color: var(--fg-3); font-size: 12px; line-height: 16px; }
+    .stack { display: flex; flex-direction: column; gap: 24px; }
+    .block { display: flex; flex-direction: column; gap: 12px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .stat .value { font-size: 20px; line-height: 26px; font-weight: 590; }
+    .stat .value.info { color: var(--accent); }
+    .stat .label { color: var(--fg-3); font-size: 12px; line-height: 16px; margin-top: 2px; }
+    .callout {
+      background: var(--info);
+      border: 1px solid var(--stroke-3);
+      border-radius: 8px;
+      padding: 12px 14px;
+    }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .rule { height: 1px; background: var(--stroke-3); border: 0; margin: 0; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .node {
+      border: 1px solid var(--stroke-2);
+      background: var(--bg);
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .node.agent { border-color: var(--accent); background: var(--fill); }
+    .arrow { color: var(--fg-4); font-size: 12px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--stroke-3);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 13px;
+      line-height: 18px;
+      table-layout: fixed;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      vertical-align: top;
+      border-bottom: 1px solid var(--stroke-3);
+      overflow-wrap: anywhere;
+    }
+    th { color: var(--fg-3); font-weight: 590; font-size: 12px; background: var(--chrome); }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:nth-child(even) td { background: var(--fill-2); }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    code {
+      font-family: var(--mono);
+      font-size: 0.92em;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--fill-2);
+    }
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    button.pill {
+      font: inherit;
+      font-size: 13px;
+      color: var(--fg);
+      background: transparent;
+      border: 1px solid var(--stroke-2);
+      border-radius: 999px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    button.pill.active { background: var(--fg); color: #181818; border-color: var(--fg); }
+    .card { border: 1px solid var(--stroke-3); border-radius: 8px; overflow: hidden; }
+    .card h3 {
+      margin: 0;
+      padding: 8px 12px;
+      font-size: 12px;
+      line-height: 16px;
+      font-weight: 500;
+      border-bottom: 1px solid var(--stroke-3);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card h3 span { color: var(--fg-3); font-weight: 400; }
+    .card .body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    pre {
+      margin: 0;
+      padding: 12px;
+      overflow: auto;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--stroke-3);
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+    @media (max-width: 900px) {
+      .stats, .cols { grid-template-columns: 1fr; }
+      body { padding: 20px 16px 48px; }
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      .muted, .small, th { color: #444; }
+      .node, table, .card, pre, .callout { border-color: #ccc; }
+      button.pill { display: none; }
+      .card, pre, table, .callout { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="stack">
+    <header>
+      <h1>Observatoire SOC — frontend and backend</h1>
+      <p class="muted">Course project 420-VD2-ID. Two frontends sit on one Python backend: a Streamlit observatory on the GPU machine, and a static site on Vercel. The backend is six CrewAI roles, three tools, SQLite traces, and a local Qwen GGUF on llama-server.</p>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><div class="value">2</div><div class="label">Frontends: Streamlit and static HTML</div></div>
+      <div class="stat"><div class="value">Three.js</div><div class="label">Only authored browser library</div></div>
+      <div class="stat"><div class="value">6</div><div class="label">Backend agents, in order</div></div>
+      <div class="stat"><div class="value info">:8080</div><div class="label">llama-server OpenAI API</div></div>
+    </section>
+
+    <section class="callout">
+      <strong>React is not source code in this repo</strong>
+      <p>You do not write React, Vue, Next.js, or an npm app. Streamlit's own browser client is a React app that the streamlit package ships, and it loads Plotly.js for charts. Your screens are Python calls (<code>st.tabs</code>, <code>st.form</code>, <code>st.plotly_chart</code>) plus <code>dashboard/studio.css</code>. The public site is HTML, CSS, <code>assets/mark.js</code>, and a short script in <code>presentation.html</code>.</p>
+    </section>
+
+    <section class="block">
+      <h2>How a mission crosses the two sides</h2>
+      <p class="small">Backend boxes run in Python. The last box is the Streamlit frontend, which only reads SQLite and live_status.json. Accent boxes are the six roles. Source: pipeline/crew_runner.py.</p>
+      <div class="flow" aria-label="Mission flow">
+        <span class="node">JSON alerts</span><span class="arrow">→</span>
+        <span class="node">3 tools</span><span class="arrow">→</span>
+        <span class="node agent">Coord.</span><span class="arrow">→</span>
+        <span class="node agent">Collect.</span><span class="arrow">→</span>
+        <span class="node agent">Classif.</span><span class="arrow">→</span>
+        <span class="node agent">Correl.</span><span class="arrow">→</span>
+        <span class="node agent">Eval.</span><span class="arrow">→</span>
+        <span class="node agent">Report</span><span class="arrow">→</span>
+        <span class="node">SQLite</span><span class="arrow">→</span>
+        <span class="node">Streamlit</span>
+      </div>
+    </section>
+
+    <hr class="rule" />
+
+    <section class="block">
+      <h2>Frontend</h2>
+      <p>Two surfaces, both hand-written. The observatory runs only on the machine that has the model. Vercel serves the landing page and the slides, and <code>.vercelignore</code> keeps the dashboard, the database, and the GGUF off that deploy.</p>
+
+      <h3>What you write, and what the browser actually runs</h3>
+      <table>
+        <thead><tr><th>Surface</th><th>You write</th><th>Browser runtime</th><th>Where it is served</th></tr></thead>
+        <tbody>
+          <tr><td>Observatory</td><td>Python Streamlit + studio.css</td><td>Streamlit client (React, shipped by the package) and Plotly.js</td><td>localhost, streamlit run dashboard/app.py</td></tr>
+          <tr><td>Landing page</td><td>index.html, inline CSS, assets/mark.js</td><td>Browser plus Three.js 0.170.0 from unpkg</td><td>Vercel, observatoire-soc-static.vercel.app</td></tr>
+          <tr><td>Slide deck</td><td>presentation.html, inline CSS and JS</td><td>Browser only. Scroll-snap, keyboard, wheel, touch</td><td>Vercel /presentation</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Observatory UI</h3>
+      <table>
+        <thead><tr><th>Piece</th><th>Pin or source</th><th>Job in this app</th></tr></thead>
+        <tbody>
+          <tr><td>Streamlit</td><td>≥ 1.38</td><td>Page, tabs, forms, buttons, sliders, file upload, dataframes, rerun</td></tr>
+          <tr><td>session_state</td><td>Streamlit</td><td>focus_run, live_log, selected_dataset survive each rerun</td></tr>
+          <tr><td>studio.css</td><td>dashboard/studio.css</td><td>Inter + Inter Tight, lime #d5f74c, hides Streamlit chrome</td></tr>
+          <tr><td>.streamlit/config.toml</td><td>theme block</td><td>primaryColor #d5f74c, background #eeeeee, text #111111</td></tr>
+          <tr><td>Plotly</td><td>≥ 5.24, Python API</td><td>Graph, timeline, Sankey, comparison bars, heatmap</td></tr>
+          <tr><td>Plotly.js</td><td>bundled by Streamlit</td><td>Draws those figures in the browser. Not imported by you</td></tr>
+          <tr><td>NetworkX</td><td>≥ 3.2</td><td>Directed edges of the six agents, then Plotly plots the coordinates</td></tr>
+          <tr><td>pandas</td><td>≥ 2.2</td><td>st.dataframe tables and the frames behind every chart</td></tr>
+          <tr><td>Google Fonts</td><td>Inter, Inter Tight</td><td>Loaded from studio.css and from index.html</td></tr>
+        </tbody>
+      </table>
+
+      <div class="cols">
+        <div>
+          <h3>Tabs and widgets</h3>
+          <table>
+            <thead><tr><th>Tab</th><th>Controls</th></tr></thead>
+            <tbody>
+              <tr><td>0. Mes sites</td><td>Form, select, slider 1–5, dataframe, delete</td></tr>
+              <tr><td>Datasets</td><td>Table, picker, JSON and ZIP upload, schema expander</td></tr>
+              <tr><td>1. Lancer</td><td>Scenario or dataset select, start, live checklist</td></tr>
+              <tr><td>2. Analyser</td><td>Run picker, 4 metrics, replay slider, 5 charts</td></tr>
+              <tr><td>3. Comparer</td><td>8 KPIs, metric select, two runs side by side</td></tr>
+              <tr><td>Guide</td><td>How to launch, offline mode, what the charts mean</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Charts</h3>
+          <table>
+            <thead><tr><th>Function</th><th>Mark</th></tr></thead>
+            <tbody>
+              <tr><td>fig_agent_graph</td><td>Scatter lines and markers</td></tr>
+              <tr><td>fig_timeline</td><td>px.bar, duration by step</td></tr>
+              <tr><td>fig_sankey</td><td>go.Sankey of agent handoffs</td></tr>
+              <tr><td>fig_compare_agents</td><td>px.bar, duration or tokens</td></tr>
+              <tr><td>fig_heatmap</td><td>px.imshow of agent by run</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>Public site</h3>
+      <table>
+        <thead><tr><th>Piece</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>index.html</td><td>Vanilla HTML and CSS. Fixed nav, backdrop blur, lime pills, no framework</td></tr>
+          <tr><td>Fonts</td><td>Inter and Inter Tight from fonts.googleapis.com</td></tr>
+          <tr><td>Three.js</td><td>0.170.0 via import map on unpkg. WebGLRenderer, RoundedBoxGeometry, RoomEnvironment</td></tr>
+          <tr><td>mark.js</td><td>Three meshes, MeshPhysicalMaterial, pointer parallax, reduced-motion stop</td></tr>
+          <tr><td>presentation.html</td><td>Full-viewport slides, Manrope, progress bar, dot nav</td></tr>
+          <tr><td>Deck script</td><td>goTo(), keydown, wheel lock, touch swipe. About 80 lines at the bottom of the file</td></tr>
+          <tr><td>vercel.json</td><td>cleanUrls, no trailing slash, X-Content-Type-Options nosniff, Referrer-Policy</td></tr>
+          <tr><td>.vercelignore</td><td>Drops .venv, .env, .gguf, .streamlit, data/traces, and node_modules</td></tr>
+        </tbody>
+      </table>
+      <p class="small">Product colors on both frontends: background #eeeeee, ink #111111, accent #d5f74c. Source: dashboard/studio.css, .streamlit/config.toml, index.html, vercel.json.</p>
+    </section>
+
+    <hr class="rule" />
+
+    <section class="block">
+      <h2>Backend</h2>
+      <p>One Python 3.12 process runs the mission. CrewAI does not support 3.14, so <code>scripts/setup.sh</code> refuses any other version and builds the venv with uv. Inference is a separate llama-server process. Nothing in the backend calls a cloud model.</p>
+
+      <h3>Runtime</h3>
+      <table>
+        <thead><tr><th>Layer</th><th>Technology</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td>Language</td><td>Python 3.12</td><td>Agents, tools, traces, dataset import, CLI</td></tr>
+          <tr><td>Env</td><td>uv + .venv</td><td>Created by scripts/setup.sh from requirements.txt</td></tr>
+          <tr><td>Config</td><td>python-dotenv ≥ 1.0</td><td>Loads .env: API base, GGUF path, GPU layers, context, port</td></tr>
+          <tr><td>Agents</td><td>CrewAI ≥ 0.80</td><td>Agent, Task, Crew, Process.sequential, kickoff</td></tr>
+          <tr><td>LLM adapter</td><td>langchain-openai ≥ 0.2</td><td>CrewAI LLM(model='openai/…', base_url=local)</td></tr>
+          <tr><td>HTTP client</td><td>openai ≥ 1.40</td><td>Readiness check, direct chat, fallback if CrewAI fails</td></tr>
+          <tr><td>Schemas</td><td>Pydantic ≥ 2.7</td><td>Used by CrewAI for structured agent IO</td></tr>
+          <tr><td>HTTP / retry</td><td>httpx ≥ 0.27, tenacity ≥ 8.3</td><td>Client stack under OpenAI, CrewAI, and the hub</td></tr>
+          <tr><td>Inference</td><td>llama.cpp llama-server</td><td>OpenAI /v1 on 127.0.0.1:8080, ./bin/llama-server</td></tr>
+          <tr><td>Model</td><td>Qwen3.6-35B-A3B Q3_K_M GGUF</td><td>Heretic Cerebellum. Thinking template off. ~12 GB</td></tr>
+          <tr><td>GPU</td><td>N_GPU_LAYERS=30, CTX_SIZE=8192</td><td>Tuned in .env for a 12 GB card. --jinja --parallel 1</td></tr>
+          <tr><td>Download</td><td>huggingface_hub ≥ 0.26</td><td>scripts/download_model.sh, hf CLI and Python API</td></tr>
+          <tr><td>Traces</td><td>SQLite stdlib</td><td>data/traces/observatory.db, tables runs and steps</td></tr>
+          <tr><td>Live bridge</td><td>JSON + threading.Lock</td><td>data/traces/live_status.json, written every phase</td></tr>
+          <tr><td>Tables for the UI</td><td>pandas ≥ 2.2, numpy ≥ 1.26</td><td>runs_df, steps_df, filters, kpi_dict</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Python packages</h3>
+      <p class="small">Every direct dependency in <code>requirements.txt</code>. Streamlit, Plotly, and NetworkX are listed here because they are imported from Python, even though the pixels land in the frontend.</p>
+      <table>
+        <thead><tr><th>Package</th><th>Pin</th><th>Side</th><th>Used for</th></tr></thead>
+        <tbody>
+          <tr><td>crewai</td><td>≥ 0.80.0</td><td>Backend</td><td>Agents, tasks, sequential crews, kickoff</td></tr>
+          <tr><td>langchain-openai</td><td>≥ 0.2.0</td><td>Backend</td><td>OpenAI-compatible LLM object inside CrewAI</td></tr>
+          <tr><td>openai</td><td>≥ 1.40.0</td><td>Backend</td><td>Chat completions against llama-server</td></tr>
+          <tr><td>pydantic</td><td>≥ 2.7.0</td><td>Backend</td><td>CrewAI structured models</td></tr>
+          <tr><td>python-dotenv</td><td>≥ 1.0.0</td><td>Backend</td><td>Load .env into config.py</td></tr>
+          <tr><td>httpx</td><td>≥ 0.27.0</td><td>Backend</td><td>HTTP under the OpenAI and hub clients</td></tr>
+          <tr><td>tenacity</td><td>≥ 8.3.0</td><td>Backend</td><td>Retries available to that client stack</td></tr>
+          <tr><td>huggingface_hub</td><td>≥ 0.26.0</td><td>Backend</td><td>Download the GGUF during setup</td></tr>
+          <tr><td>pandas</td><td>≥ 2.2.0</td><td>Both</td><td>Trace frames, KPIs, and st.dataframe</td></tr>
+          <tr><td>numpy</td><td>≥ 1.26.0</td><td>Both</td><td>Numeric backing for those frames</td></tr>
+          <tr><td>streamlit</td><td>≥ 1.38.0</td><td>Frontend</td><td>Observatory shell</td></tr>
+          <tr><td>plotly</td><td>≥ 5.24.0</td><td>Frontend</td><td>Every chart figure</td></tr>
+          <tr><td>networkx</td><td>≥ 3.2</td><td>Frontend</td><td>Agent graph topology</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Standard library the backend actually calls</h3>
+      <table>
+        <thead><tr><th>Module</th><th>Where</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td>sqlite3</td><td>pipeline/tracing.py</td><td>runs and steps, row factory, one transaction per write</td></tr>
+          <tr><td>json</td><td>tools, traces, live status, datasets</td><td>Alerts, inventory, live file, import payloads</td></tr>
+          <tr><td>pathlib</td><td>config.py and every loader</td><td>ROOT, data/alerts, data/traces, models</td></tr>
+          <tr><td>threading</td><td>pipeline/live_status.py</td><td>Lock around live_status.json</td></tr>
+          <tr><td>uuid, datetime</td><td>pipeline/tracing.py</td><td>run_id and UTC timestamps</td></tr>
+          <tr><td>dataclasses</td><td>StepTrace, LLMResult, ValidationResult</td><td>Step rows, token usage, import checks</td></tr>
+          <tr><td>argparse</td><td>scripts/run_scenario.py, run_batch.py</td><td>CLI scenario, --offline, batch size</td></tr>
+          <tr><td>zipfile, shutil, re</td><td>pipeline/datasets.py</td><td>ZIP import and dataset id checks</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Six roles and three tools</h3>
+      <div class="cols">
+        <table>
+          <thead><tr><th>Order</th><th>Agent</th><th>Job</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Coordonnateur</td><td>Split the mission into a short plan</td></tr>
+            <tr><td>2</td><td>Collecteur</td><td>Summarize alerts and inventory</td></tr>
+            <tr><td>3</td><td>Classificateur</td><td>Type, severity, likely false positives</td></tr>
+            <tr><td>4</td><td>Corrélateur</td><td>Group alerts into campaigns</td></tr>
+            <tr><td>5</td><td>Évaluateur</td><td>Check the rule scores, P1/P2/P3</td></tr>
+            <tr><td>6</td><td>Rapporteur</td><td>Final brief for the analyst</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th>Tool</th><th>File</th><th>Returns</th></tr></thead>
+          <tbody>
+            <tr><td>parse_alert_log</td><td>tools/alerts.py</td><td>Alerts, severity and source counts</td></tr>
+            <tr><td>lookup_asset_inventory</td><td>tools/inventory.py</td><td>Assets, criticality ≥ 4</td></tr>
+            <tr><td>score_risk_rules</td><td>tools/risk_rules.py</td><td>Risk score and P1/P2/P3</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small">Roles live in config.AGENT_ROLES. tools/sites.py merges user-added hostnames into the same inventory before scoring, and can build a synthetic alert file aimed at those hostnames. Delegation is off on every agent.</p>
+
+      <h3>Scripts</h3>
+      <table>
+        <thead><tr><th>Script</th><th>Job</th></tr></thead>
+        <tbody>
+          <tr><td>scripts/setup.sh</td><td>Python 3.12 check, uv venv, pip install, .env, llama-server, GGUF</td></tr>
+          <tr><td>scripts/install_llama_server.sh</td><td>Place the llama.cpp binary in ./bin</td></tr>
+          <tr><td>scripts/download_model.sh</td><td>huggingface_hub download of the GGUF</td></tr>
+          <tr><td>scripts/start_llm.sh</td><td>llama-server with GPU layers, context, jinja</td></tr>
+          <tr><td>scripts/run_scenario.py</td><td>One mission. --offline skips the model and still runs the tools</td></tr>
+          <tr><td>scripts/run_batch.py</td><td>Repeated runs to fill the trace store</td></tr>
+          <tr><td>scripts/export_traces.py</td><td>Dump SQLite traces to JSON</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Data the backend reads</h3>
+      <table>
+        <thead><tr><th>Store</th><th>Path</th><th>Shape</th></tr></thead>
+        <tbody>
+          <tr><td>Lab alerts</td><td>data/alerts/*.json</td><td>Five scenarios, list of alert objects</td></tr>
+          <tr><td>Inventory</td><td>data/inventory/assets.json</td><td>ACME-LAB assets, criticality 1–5</td></tr>
+          <tr><td>User sites</td><td>written by tools/sites.py</td><td>Hostnames merged into the inventory</td></tr>
+          <tr><td>Datasets</td><td>data/datasets/&lt;id&gt;/</td><td>manifest.json, alerts.json, optional assets.json</td></tr>
+          <tr><td>Imports</td><td>pipeline/datasets.py</td><td>JSON or ZIP, validated before a mission can use them</td></tr>
+          <tr><td>Traces</td><td>data/traces/observatory.db</td><td>runs and steps</td></tr>
+          <tr><td>Demo seed</td><td>data/traces/demo_runs.json</td><td>TraceStore.seed_if_empty on Flask startup, when the database has no runs</td></tr>
+          <tr><td>Live file</td><td>data/traces/live_status.json</td><td>Current agent, phase, progress, latest output</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Built-in scenarios</h3>
+      <table>
+        <thead><tr><th>Key</th><th>Label</th><th>Alert file</th></tr></thead>
+        <tbody>
+          <tr><td>bruteforce_ssh</td><td>Campagne brute-force SSH</td><td>data/alerts/bruteforce_ssh.json</td></tr>
+          <tr><td>phishing_creds</td><td>Hameçonnage / vol d'identifiants</td><td>data/alerts/phishing_creds.json</td></tr>
+          <tr><td>ransomware_precursor</td><td>Précurseurs ransomware</td><td>data/alerts/ransomware_precursor.json</td></tr>
+          <tr><td>noisy_ids</td><td>Déferlement de faux positifs IDS</td><td>data/alerts/noisy_ids.json</td></tr>
+          <tr><td>exfiltration</td><td>Exfiltration de données suspecte</td><td>data/alerts/exfiltration.json</td></tr>
+        </tbody>
+      </table>
+      <p class="small">Source: config.SCENARIOS. An imported dataset or a user-site mission can run without being in that dict, as long as an alert file is passed to run_scenario.</p>
+    </section>
+
+    <hr class="rule" />
+
+    <section class="block">
+      <h2>What SQLite does in this app</h2>
+      <p>SQLite is the memory of the observatory. It is a single file, <code>data/traces/observatory.db</code>, opened by Python's built-in <code>sqlite3</code> module. There is no database server, no Postgres, and no ORM. <code>TraceStore</code> in <code>pipeline/tracing.py</code> creates the file the first time a mission or the dashboard starts, then builds two tables if they are not already there.</p>
+      <section class="callout">
+        <strong>SQLite is the history. The live pulse is a different file.</strong>
+        <p>While a mission is running, the Lancer tab polls <code>data/traces/live_status.json</code> so the checklist can move. SQLite is written at the same moments, but the charts, the replay slider, the KPIs, and the run picker all read the database after each step is committed. Alert logs stay as JSON on disk. The GGUF is not stored here.</p>
+      </section>
+
+      <h3>One mission, three writes</h3>
+      <table>
+        <thead><tr><th>When</th><th>Call</th><th>What lands in the file</th></tr></thead>
+        <tbody>
+          <tr><td>Before the first agent</td><td>start_run</td><td>One runs row, status running, with the scenario, mission text, and model name</td></tr>
+          <tr><td>After each of the six agents</td><td>add_step</td><td>One steps row: duration, tokens, tools, errors, quality, and the agent's text</td></tr>
+          <tr><td>After the rapporteur</td><td>finish_run</td><td>The same runs row is updated: success, partial, or failed, plus totals and the final brief</td></tr>
+        </tbody>
+      </table>
+      <p>The run id looks like <code>run_20261018T143022_ab12cd34</code>. It is the primary key. Every step points back to it. A finished mission is one runs row and six steps rows. <code>run_batch</code> and the Streamlit launch button both go through <code>SOCObservatoryCrew</code>, so both write the same tables. Offline mode still writes them. The model being down does not skip the database.</p>
+
+      <h3>runs — one row per mission</h3>
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>run_id</td><td>Primary key. Timestamp plus 8 random hex characters</td></tr>
+          <tr><td>scenario, scenario_label, mission</td><td>Which case ran, and the French mission text</td></tr>
+          <tr><td>started_at, ended_at</td><td>UTC ISO timestamps. ended_at is filled in finish_run</td></tr>
+          <tr><td>status</td><td>running, then success, partial, or failed</td></tr>
+          <tr><td>model</td><td>Display name of the local GGUF</td></tr>
+          <tr><td>total_duration_s</td><td>Sum of the six step durations</td></tr>
+          <tr><td>total_tokens_in, total_tokens_out</td><td>Prompt and completion tokens, estimated when CrewAI does not return usage</td></tr>
+          <tr><td>total_cost_usd</td><td>From those token counts. Defaults to 0 because inference is local</td></tr>
+          <tr><td>error_count, retry_count</td><td>Tool failures and the CrewAI-to-OpenAI fallback</td></tr>
+          <tr><td>quality_score</td><td>0 to 0.98, from length and whether the brief mentions P1 or priority</td></tr>
+          <tr><td>final_result</td><td>The rapporteur brief, the text shown in Analyser</td></tr>
+        </tbody>
+      </table>
+
+      <h3>steps — one row per agent</h3>
+      <table>
+        <thead><tr><th>Column</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>id, run_id, step_index</td><td>Auto id, foreign key to runs, order 0 through 5</td></tr>
+          <tr><td>agent, task, status</td><td>Role key, task title, success or error</td></tr>
+          <tr><td>start_time, end_time, duration_s</td><td>Wall clock for that agent only</td></tr>
+          <tr><td>tokens_in, tokens_out, cost_usd</td><td>That step's share of the run totals</td></tr>
+          <tr><td>tools_used, tool_calls</td><td>JSON text, for example parse_alert_log on the collecteur</td></tr>
+          <tr><td>retries, errors</td><td>errors is a JSON list of exception strings</td></tr>
+          <tr><td>messages_to</td><td>JSON list of the next agent, the edge the Sankey draws</td></tr>
+          <tr><td>result_summary</td><td>First 500 characters, used in the replay</td></tr>
+          <tr><td>raw_output</td><td>Full reply, stored only up to 8000 characters</td></tr>
+          <tr><td>quality_score</td><td>Same heuristic as the run, computed on this step's text</td></tr>
+        </tbody>
+      </table>
+      <p class="small">tools_used, errors, and messages_to are TEXT columns. get_steps runs json.loads on them before the dashboard sees the row. A broken JSON value becomes an empty list instead of crashing the page.</p>
+
+      <h3>Who writes it, and who reads it</h3>
+      <table>
+        <thead><tr><th>Piece</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td>pipeline/tracing.py</td><td>TraceStore. Opens the file, creates tables, inserts, updates, lists, exports</td></tr>
+          <tr><td>pipeline/crew_runner.py</td><td>The only writer during a mission: start_run, add_step, finish_run</td></tr>
+          <tr><td>backend/app.py</td><td>Flask owns writes. Startup calls TraceStore.seed_if_empty so the first open is not blank</td></tr>
+          <tr><td>dashboard/data_loader.py</td><td>GET /api/runs becomes pandas frames. Every chart and KPI starts here</td></tr>
+          <tr><td>dashboard/app.py</td><td>Run picker, replay, comparison, and the final brief all use those frames</td></tr>
+          <tr><td>scripts/export_traces.py</td><td>POST /api/runs/export writes the database back out as demo-style JSON</td></tr>
+          <tr><td>scripts/run_batch.py</td><td>Many missions through POST /api/runs, so Comparer has more than one run</td></tr>
+        </tbody>
+      </table>
+      <p>Each call opens a connection, sets <code>row_factory</code> to <code>sqlite3.Row</code>, commits, and closes. There is no pool and no background writer. The dashboard never sends SQL of its own. It asks TraceStore for dicts, and pandas does the averages: success rate, mean duration, token sums, the most used agent, and the slowest agent.</p>
+    </section>
+
+    <hr class="rule" />
+
+    <section class="block">
+      <h2>How the backend talks to the frontend (MVT)</h2>
+      <p>Model, View, and Template share one Streamlit process. The Model keeps the rows. The View loads those rows and decides what to show. The Template draws the page. There is no second server and no JSON API between them.</p>
+      <table>
+        <thead><tr><th>Role</th><th>Job</th><th>Files in this project</th></tr></thead>
+        <tbody>
+          <tr><td>Model</td><td>Stores missions and the facts the agents used. Knows nothing about buttons or charts.</td><td>pipeline/tracing.py, tools/, data/alerts, data/inventory</td></tr>
+          <tr><td>View</td><td>Loads the Model, builds tables and figures, and starts a mission when a button is clicked.</td><td>dashboard/app.py, dashboard/data_loader.py, dashboard/charts.py</td></tr>
+          <tr><td>Template</td><td>Draws the page. Receives frames and figures. Never opens observatory.db.</td><td>Streamlit widgets, dashboard/studio.css, Plotly.js in the browser</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Model — pipeline/tracing.py</h3>
+      <p>This is the only SQL. <code>list_runs</code> and <code>get_steps</code> return dicts. The View calls them. The Template never does.</p>
+      <pre>def list_runs(self) -&gt; list[dict[str, Any]]:
+    with self._conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM runs ORDER BY started_at DESC"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+def get_steps(self, run_id: str) -&gt; list[dict[str, Any]]:
+    with self._conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM steps WHERE run_id = ? ORDER BY step_index",
+            (run_id,),
+        ).fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        for key in ("tools_used", "errors", "messages_to"):
+            d[key] = json.loads(d[key] or "[]")
+        out.append(d)
+    return out</pre>
+
+      <h3>View reads the Model — dashboard/data_loader.py, dashboard/app.py</h3>
+      <p><code>runs_df</code> and <code>steps_df</code> turn those dicts into frames. The Résultat tab then asks <code>charts.py</code> for figures and passes them to the Template.</p>
+      <pre>def runs_df(store: TraceStore | None = None) -&gt; pd.DataFrame:
+    store = store or get_store()
+    rows = store.list_runs()
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows)
+
+def steps_df(store: TraceStore | None = None) -&gt; pd.DataFrame:
+    store = store or get_store()
+    frames = []
+    for run in store.list_runs():
+        for s in store.get_steps(run["run_id"]):
+            s = dict(s)
+            s["scenario"] = run.get("scenario")
+            frames.append(s)
+    return pd.DataFrame(frames)
+
+# dashboard/app.py — Résultat tab
+runs = runs_df(store)
+steps = steps_df(store)
+run_meta = store.get_run(selected_run) or {}
+run_steps = steps[steps["run_id"] == selected_run].sort_values("step_index")
+chart(fig_agent_graph(active_agent=active), key="analyze_graph")
+chart(fig_timeline(run_steps), key="analyze_timeline")
+chart(fig_sankey(run_steps), key="analyze_sankey")</pre>
+
+      <h3>View writes the Model — dashboard/app.py, pipeline/crew_runner.py</h3>
+      <p>Démarrer calls <code>run_scenario</code>. The crew inserts the run, inserts one step per agent, and emits <code>on_progress</code> so the Template can update before the script finishes. <code>focus_run</code> is what the next rerun reads back from SQLite.</p>
+      <pre># pipeline/crew_runner.py
+run_id = self.store.start_run(scenario_key, mission, model, scenario_label=meta.get("label"))
+self.store.add_step(run_id, step_index, step)
+self._emit(on_progress, {"state": "running", "agent": name, "progress": step_index / total_steps})
+
+# dashboard/app.py
+def on_progress(event: dict) -&gt; None:
+    prog = float(event.get("progress") or 0)
+    msg = event.get("message") or ""
+    placeholders["progress"].progress(min(max(prog, 0.02), 1.0), text=msg)
+    with placeholders["graph"].container():
+        live_chart(fig_agent_graph(active_agent=event.get("agent")))
+
+result = crew.run_scenario(scenario, on_progress=on_progress, force_tools_only=use_offline)
+if result:
+    st.session_state.focus_run = result["run_id"]</pre>
+
+      <h3>Template — dashboard/app.py</h3>
+      <p><code>chart</code> is the handoff. The View built the figure. This function only sends it to the browser. The metrics and the text area below read fields the View already pulled off the Model.</p>
+      <pre>def chart(fig, key: str) -&gt; None:
+    st.plotly_chart(
+        fig,
+        width="stretch",
+        key=key,
+        config={"displayModeBar": False, "responsive": True},
+    )
+
+m1.metric("Statut", run_meta.get("status") or "—")
+m2.metric("Qualité", run_meta.get("quality_score") or 0)
+m3.metric("Durée", f"{round(float(run_meta.get('total_duration_s') or 0), 1)} s")
+st.text_area("Ce que l'agent a produit", row.get("raw_output") or "")
+st.write(run_meta.get("final_result") or "—")</pre>
+
+      <h3>The two paths, side by side</h3>
+      <table>
+        <thead><tr><th>Path</th><th>When</th><th>What moves</th></tr></thead>
+        <tbody>
+          <tr><td>Model → View → Template</td><td>Every rerun of Analyser and Comparer</td><td>SQLite rows → DataFrames → Plotly figures and tables</td></tr>
+          <tr><td>Template → View → Model</td><td>Click on Démarrer</td><td>Button → run_scenario → new runs and steps rows</td></tr>
+          <tr><td>View → Template, live</td><td>During the six agents</td><td>on_progress updates the checklist. live_status.json is the copy a refresh can still read.</td></tr>
+        </tbody>
+      </table>
+      <p class="small">The Vercel pages are a Template with no Model. index.html and presentation.html never call TraceStore. Only the Streamlit observatory is the MVT loop above.</p>
+    </section>
+
+    <hr class="rule" />
+
+    <section class="block" id="code">
+      <h2>Code that keeps each side running</h2>
+      <p class="muted">Shortened excerpts of the real files. Switch side, then pick a function. On paper, every excerpt below is included.</p>
+      <div class="pills" id="sides"></div>
+      <div class="pills" id="snips"></div>
+      <article class="card">
+        <h3 id="snip-title">Studio chrome <span id="snip-file">dashboard/app.py</span></h3>
+        <div class="body">
+          <p id="snip-why"></p>
+          <pre id="snip-code"></pre>
+        </div>
+      </article>
+      <div id="print-snippets"></div>
+    </section>
+
+    <section class="block">
+      <h2>File map</h2>
+      <div class="cols">
+        <div>
+          <h3>Frontend</h3>
+          <table>
+            <thead><tr><th>Path</th><th>Job</th></tr></thead>
+            <tbody>
+              <tr><td>dashboard/app.py</td><td>Tabs, forms, launch, live log, replay</td></tr>
+              <tr><td>dashboard/studio.css</td><td>Visual chrome injected into the page</td></tr>
+              <tr><td>dashboard/charts.py</td><td>Plotly figures and the NetworkX graph</td></tr>
+              <tr><td>dashboard/data_loader.py</td><td>Pandas frames and kpi_dict</td></tr>
+              <tr><td>.streamlit/config.toml</td><td>Streamlit theme tokens</td></tr>
+              <tr><td>index.html</td><td>Landing page</td></tr>
+              <tr><td>assets/mark.js</td><td>Three.js mark</td></tr>
+              <tr><td>presentation.html</td><td>Slide deck and its script</td></tr>
+              <tr><td>vercel.json</td><td>Static hosting headers</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Backend</h3>
+          <table>
+            <thead><tr><th>Path</th><th>Job</th></tr></thead>
+            <tbody>
+              <tr><td>config.py</td><td>Paths, scenarios, roles, model defaults</td></tr>
+              <tr><td>agents/factory.py</td><td>CrewAI agents and the shared LLM</td></tr>
+              <tr><td>pipeline/crew_runner.py</td><td>SOCObservatoryCrew.run_scenario</td></tr>
+              <tr><td>pipeline/llm.py</td><td>Client, readiness, cost estimate</td></tr>
+              <tr><td>pipeline/tracing.py</td><td>SQLite TraceStore</td></tr>
+              <tr><td>pipeline/live_status.py</td><td>Live JSON for the UI</td></tr>
+              <tr><td>pipeline/datasets.py</td><td>Validate and import datasets</td></tr>
+              <tr><td>backend/app.py</td><td>Flask API: runs, live status, sites, datasets</td></tr>
+              <tr><td>tools/*.py</td><td>Alerts, inventory, risk, user sites</td></tr>
+              <tr><td>scripts/*.sh, scripts/*.py</td><td>Setup, model, batch, export</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const SNIPPETS = [
+      { id: "chrome", side: "frontend", pill: "Studio chrome", file: "dashboard/app.py", title: "CSS is injected into Streamlit", why: "The observatory look is not a React layout. studio_chrome reads dashboard/studio.css and drops it into the page with st.markdown. That file loads Inter and Inter Tight, paints the lime bar, and hides Streamlit's menu, footer, and deploy button.", code: `def studio_chrome(llm_online: bool) -> None:\n    css = (Path(__file__).parent / "studio.css").read_text(encoding="utf-8")\n    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)\n    pill = (\n        '<span class="vis-pill vis-pill-on">LLM en ligne</span>'\n        if llm_online\n        else '<span class="vis-pill vis-pill-off">LLM hors ligne</span>'\n    )\n    st.markdown(f"<div class='vis-bar'>…{pill}</div>", unsafe_allow_html=True)` },
+      { id: "tabs", side: "frontend", pill: "Pages and state", file: "dashboard/app.py", title: "Six tabs, state kept in the Streamlit session", why: "There is no router and no client store. st.session_state survives reruns. focus_run is the run open in Analyser. live_log is the mission journal. selected_dataset is set from the Datasets tab and read on Lancer.", code: `st.set_page_config(page_title=config.PROJECT_TITLE, layout="wide")\n\nif "focus_run" not in st.session_state:\n    st.session_state.focus_run = None\nif "live_log" not in st.session_state:\n    st.session_state.live_log = []\n\ntab_sites, tab_data, tab_launch, tab_analyze, tab_compare, tab_help = st.tabs([\n    "0. Mes sites",\n    "Datasets",\n    "1. Lancer une mission",\n    "2. Analyser",\n    "3. Comparer",\n    "Guide",\n])` },
+      { id: "graph", side: "frontend", pill: "Plotly graph", file: "dashboard/charts.py", title: "NetworkX holds the edges, Plotly.js draws them", why: "fig_agent_graph builds a Plotly figure in Python. st.plotly_chart hands it to Plotly.js inside Streamlit's browser client. The active agent turns lime (#d5f74c) during a live run.", code: `g = nx.DiGraph()\ng.add_nodes_from(AGENT_ORDER)\ng.add_edges_from(EDGES)\n\nfig.add_trace(go.Scatter(\n    x=edge_x, y=edge_y, mode="lines",\n    line=dict(width=2, color="#94a3b8"), name="communications",\n))\nst.plotly_chart(fig, width="stretch", key=key)` },
+      { id: "three", side: "frontend", pill: "Three.js mark", file: "assets/mark.js", title: "The only WebGL code in the repo", why: "index.html loads Three.js 0.170.0 from unpkg through an import map, then assets/mark.js. It is a spinning three-arm mark. prefers-reduced-motion stops the loop. It does not talk to the agents.", code: `import * as THREE from "three";\nimport { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";\n\nconst renderer = new THREE.WebGLRenderer({\n  canvas, alpha: true, antialias: true,\n  powerPreference: "high-performance",\n});\nrenderer.toneMapping = THREE.ACESFilmicToneMapping;\n\nconst arm = new RoundedBoxGeometry(0.58, 2.72, 0.78, 3, 0.14);` },
+      { id: "slides", side: "frontend", pill: "Slide deck", file: "presentation.html", title: "Scroll-snap deck in plain JavaScript", why: "The deck is one HTML file. CSS scroll-snap makes each section a full viewport. The script builds the dot nav and moves with the keyboard, the wheel, and touch. Typeface is Manrope.", code: `function goTo(index) {\n  current = Math.max(0, Math.min(slides.length - 1, index));\n  slides[current].scrollIntoView({ behavior: "smooth", block: "start" });\n  progress.style.width = ((current + 1) / slides.length) * 100 + "%";\n}` },
+      { id: "kickoff", side: "backend", pill: "Crew kickoff", file: "pipeline/crew_runner.py", title: "One CrewAI task per agent", why: "Six roles run in order. Each one is a single-agent Crew. If CrewAI throws, the same prompt is retried through the OpenAI client. If the model is down, a fixed French summary is used and the tools still run.", code: `use_llm = (not force_tools_only) and llm_ready()\n\ncrew = Crew(\n    agents=[agents[name]],\n    tasks=[task],\n    process=Process.sequential,\n    verbose=False,\n)\nresult = crew.kickoff()` },
+      { id: "tools", side: "backend", pill: "Grounding tools", file: "pipeline/crew_runner.py", title: "Facts are loaded before any model call", why: "The agents do not invent the alert set. These three tools run first and their summaries are injected into later prompts.", code: `parsed = parse_alert_log(alert_file)\nasset_ids = assets_for_alerts(parsed["alerts"])\ninventory = lookup_asset_inventory(asset_ids)\nrisk = score_risk_rules(parsed["alerts"], inventory["by_id"])` },
+      { id: "score", side: "backend", pill: "Risk score", file: "tools/risk_rules.py", title: "P1 / P2 / P3 from severity and criticality", why: "Severity is weighted 1–5. Asset criticality is 1–5. The cutoffs turn that mix into a priority the Évaluateur is asked to confirm.", code: `base = SEVERITY_WEIGHT.get(sev, 2)\ncrit = int(asset.get("criticality", 1))\nrisk = round(base * 0.6 + crit * 0.8, 2)\npriority = "P1" if risk >= 6.5 else "P2" if risk >= 4.5 else "P3"` },
+      { id: "llm", side: "backend", pill: "Local LLM", file: "pipeline/llm.py", title: "OpenAI client pointed at llama-server", why: "There is no cloud API key. The OpenAI SDK talks to llama-server on 127.0.0.1:8080. Thinking is disabled so Qwen3 stays inside the 8192-token context.", code: `return OpenAI(\n    base_url=config.OPENAI_API_BASE,  # http://127.0.0.1:8080/v1\n    api_key=config.OPENAI_API_KEY,    # sk-local\n)` },
+      { id: "traces", side: "backend", pill: "SQLite", file: "pipeline/tracing.py", title: "One file remembers every mission", why: "sqlite3 is the Python standard library. TraceStore opens data/traces/observatory.db, creates the tables if they are missing, and closes the connection after each write. Lists such as tools and errors are saved as JSON text because SQLite has no array type. raw_output is cut at 8000 characters.", code: "conn = sqlite3.connect(self.db_path)  # data/traces/observatory.db\\nconn.row_factory = sqlite3.Row\\n\\nrun_id = start_run(...)               # INSERT runs, status = 'running'\\nadd_step(run_id, step_index, step)    # INSERT one steps row per agent\\nfinish_run(run_id, totals, brief)     # UPDATE runs with duration, tokens, brief\\n\\njson.dumps(step.tools_used)\\njson.dumps(step.errors)\\njson.dumps(step.messages_to)\\nstep.raw_output[:8000]" },
+      { id: "live", side: "backend", pill: "Live status", file: "pipeline/live_status.py", title: "The UI polls a JSON file", why: "Each phase writes data/traces/live_status.json under a thread lock. The Lancer tab reads that file while the mission is still running.", code: `def write_live(payload: dict) -> None:\n    data = dict(payload)\n    data["updated_at"] = _now()\n    with _lock:\n        LIVE_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2))` },
+      { id: "server", side: "backend", pill: "llama-server", file: "scripts/start_llm.sh", title: "GGUF served as an OpenAI API", why: "setup.sh installs llama-server into ./bin and the GGUF into models/. Python only speaks HTTP to this process.", code: `exec "$LLAMA_BIN" \\\n  --model "$MODEL" \\\n  --host 127.0.0.1 \\\n  --port "$PORT" \\\n  --n-gpu-layers "$NGL" \\\n  --ctx-size "$CTX" \\\n  --jinja --parallel 1 -np 1` }
+    ];
+
+    let side = "frontend";
+    let current = "chrome";
+
+    function render() {
+      const sides = document.getElementById("sides");
+      sides.innerHTML = "";
+      for (const name of ["frontend", "backend"]) {
+        const b = document.createElement("button");
+        b.className = "pill" + (side === name ? " active" : "");
+        b.type = "button";
+        b.textContent = name[0].toUpperCase() + name.slice(1);
+        b.onclick = () => {
+          side = name;
+          current = SNIPPETS.find((s) => s.side === name).id;
+          render();
+        };
+        sides.appendChild(b);
+      }
+      const snips = document.getElementById("snips");
+      snips.innerHTML = "";
+      const pool = SNIPPETS.filter((s) => s.side === side);
+      for (const s of pool) {
+        const b = document.createElement("button");
+        b.className = "pill" + (current === s.id ? " active" : "");
+        b.type = "button";
+        b.textContent = s.pill;
+        b.onclick = () => { current = s.id; render(); };
+        snips.appendChild(b);
+      }
+      const item = pool.find((s) => s.id === current) || pool[0];
+      document.getElementById("snip-title").firstChild.textContent = item.title + " ";
+      document.getElementById("snip-file").textContent = item.file;
+      document.getElementById("snip-why").textContent = item.why;
+      document.getElementById("snip-code").textContent = item.code;
+    }
+
+    const printHost = document.getElementById("print-snippets");
+    for (const s of SNIPPETS) {
+      const art = document.createElement("article");
+      art.className = "card";
+      art.style.marginTop = "12px";
+      art.innerHTML = "<h3></h3><div class='body'><p></p><pre></pre></div>";
+      art.querySelector("h3").textContent = s.side + " — " + s.title + " ";
+      const span = document.createElement("span");
+      span.textContent = s.file;
+      art.querySelector("h3").appendChild(span);
+      art.querySelector("p").textContent = s.why;
+      art.querySelector("pre").textContent = s.code;
+      printHost.appendChild(art);
+    }
+    const style = document.createElement("style");
+    style.textContent = "@media screen { #print-snippets { display: none; } } @media print { #code .pills, #code .card:first-of-type { display: none; } #print-snippets { display: block; } }";
+    document.head.appendChild(style);
+    render();
+  </script>
+</body>
+</html>

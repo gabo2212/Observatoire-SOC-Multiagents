@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Batch-run ≥20 executions across the five SOC scenarios."""
+"""Batch-run executions across the five SOC scenarios, via the API."""
 from __future__ import annotations
 
 import argparse
@@ -11,10 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-import config
-from pipeline.crew_runner import SOCObservatoryCrew
-from pipeline.llm import llm_ready
-from pipeline.tracing import TraceStore
+from backend.client import ApiError, ObservatoryClient
 
 
 def main() -> None:
@@ -29,28 +26,39 @@ def main() -> None:
     parser.add_argument("--offline-only", action="store_true")
     args = parser.parse_args()
 
-    scenarios = list(config.SCENARIOS.keys())
-    crew = SOCObservatoryCrew()
-    store = crew.store
-    results = []
+    client = ObservatoryClient()
+    try:
+        health = client.health()
+        scenarios = [row["key"] for row in client.scenarios()]
+    except ApiError as exc:
+        print(exc, file=sys.stderr)
+        raise SystemExit(1) from exc
 
-    ready = (not args.offline_only) and llm_ready()
+    results = []
+    ready = (not args.offline_only) and bool(health.get("llm_ready"))
     print(f"LLM ready: {ready}")
 
     for scenario in scenarios:
         for i in range(args.per_scenario):
             use_offline = args.offline_only or (not ready) or (i >= args.live)
-            print(f"→ {scenario} #{i+1} ({'offline' if use_offline else 'live'})")
+            print(f"→ {scenario} #{i + 1} ({'offline' if use_offline else 'live'})")
             try:
-                result = crew.run_scenario(scenario, force_tools_only=use_offline)
-            except Exception as exc:  # noqa: BLE001
+                accepted = client.start_run(
+                    {"scenario": scenario, "force_tools_only": use_offline}
+                )
+                result = client.wait_run(accepted["run_id"])
+            except ApiError as exc:
                 print(f"  ERROR: {exc}")
                 result = {"scenario": scenario, "status": "failed", "error": str(exc)}
             results.append(result)
             print(f"  status={result.get('status')} run_id={result.get('run_id')}")
 
-    export_path = store.export_json()
-    print(f"Exported {len(store.list_runs())} runs → {export_path}")
+    try:
+        exported = client.export_runs()
+    except ApiError as exc:
+        print(exc, file=sys.stderr)
+        raise SystemExit(1) from exc
+    print(f"Exported {exported['count']} runs → {exported['path']}")
     print(json.dumps({"completed": len(results), "results": results}, ensure_ascii=False, indent=2)[:2000])
 
 

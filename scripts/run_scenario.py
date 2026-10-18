@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a single SOC triage scenario through the multi-agent crew."""
+"""Run a single SOC triage scenario through the observatory API."""
 from __future__ import annotations
 
 import argparse
@@ -12,7 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import config
-from pipeline.crew_runner import SOCObservatoryCrew
+from backend.client import ApiError, ObservatoryClient
 
 
 def main() -> None:
@@ -30,8 +30,16 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    crew = SOCObservatoryCrew()
-    result = crew.run_scenario(args.scenario, force_tools_only=args.offline)
+    client = ObservatoryClient()
+    try:
+        client.health()
+        accepted = client.start_run(
+            {"scenario": args.scenario, "force_tools_only": args.offline}
+        )
+        result = client.wait_run(accepted["run_id"])
+    except ApiError as exc:
+        print(exc, file=sys.stderr)
+        raise SystemExit(1) from exc
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

@@ -47,7 +47,7 @@ class TraceStore:
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30)
         conn.row_factory = sqlite3.Row
         try:
             yield conn
@@ -208,6 +208,82 @@ class TraceStore:
             ).fetchone()
         return dict(row) if row else None
 
+    def seed_if_empty(self) -> int:
+        """Load demo_runs.json when the database has no runs yet."""
+        if self.list_runs():
+            return 0
+        path = Path(config.DEMO_TRACES_JSON)
+        if not path.exists():
+            return 0
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, list):
+            return 0
+        imported = 0
+        with self._conn() as conn:
+            for item in payload:
+                run = item["run"]
+                conn.execute(
+                    """
+                    INSERT OR REPLACE INTO runs (
+                        run_id, scenario, scenario_label, started_at, ended_at, status, model,
+                        total_duration_s, total_tokens_in, total_tokens_out, total_cost_usd,
+                        error_count, retry_count, quality_score, final_result, mission
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        run["run_id"],
+                        run["scenario"],
+                        run.get("scenario_label"),
+                        run["started_at"],
+                        run.get("ended_at"),
+                        run["status"],
+                        run.get("model"),
+                        run.get("total_duration_s") or 0,
+                        run.get("total_tokens_in") or 0,
+                        run.get("total_tokens_out") or 0,
+                        run.get("total_cost_usd") or 0,
+                        run.get("error_count") or 0,
+                        run.get("retry_count") or 0,
+                        run.get("quality_score") or 0,
+                        run.get("final_result"),
+                        run.get("mission"),
+                    ),
+                )
+                for step in item.get("steps", []):
+                    conn.execute(
+                        """
+                        INSERT INTO steps (
+                            run_id, step_index, agent, task, status, model, start_time, end_time,
+                            duration_s, tokens_in, tokens_out, cost_usd, tools_used, tool_calls,
+                            retries, errors, result_summary, quality_score, messages_to, raw_output
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            step["run_id"],
+                            step["step_index"],
+                            step["agent"],
+                            step["task"],
+                            step["status"],
+                            step.get("model"),
+                            step.get("start_time"),
+                            step.get("end_time"),
+                            step.get("duration_s"),
+                            step.get("tokens_in"),
+                            step.get("tokens_out"),
+                            step.get("cost_usd"),
+                            _json_text(step.get("tools_used")),
+                            step.get("tool_calls"),
+                            step.get("retries"),
+                            _json_text(step.get("errors")),
+                            step.get("result_summary"),
+                            step.get("quality_score"),
+                            _json_text(step.get("messages_to")),
+                            step.get("raw_output"),
+                        ),
+                    )
+                imported += 1
+        return imported
+
     def get_steps(self, run_id: str) -> list[dict[str, Any]]:
         with self._conn() as conn:
             rows = conn.execute(
@@ -238,3 +314,9 @@ class TraceStore:
 
 def step_to_dict(step: StepTrace) -> dict[str, Any]:
     return asdict(step)
+
+
+def _json_text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    return json.dumps(value or [], ensure_ascii=False)
