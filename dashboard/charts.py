@@ -32,6 +32,19 @@ def agent_color(name: str) -> str:
     return config.AGENT_ROLES.get(name, {}).get("color", "#64748b")
 
 
+def _studio(fig: go.Figure, *, axes: bool = True) -> go.Figure:
+    fig.update_layout(
+        paper_bgcolor="#ffffff",
+        plot_bgcolor="#ffffff",
+        font=dict(family="Inter, sans-serif", color="#111111", size=13),
+        title_font=dict(family="Inter Tight, Inter, sans-serif", size=20, color="#111111"),
+    )
+    if axes:
+        fig.update_xaxes(gridcolor="#ededed", zerolinecolor="#e4e4e4")
+        fig.update_yaxes(gridcolor="#ededed", zerolinecolor="#e4e4e4")
+    return fig
+
+
 def fig_agent_graph(active_agent: str | None = None, steps: pd.DataFrame | None = None) -> go.Figure:
     g = nx.DiGraph()
     g.add_nodes_from(AGENT_ORDER)
@@ -59,7 +72,7 @@ def fig_agent_graph(active_agent: str | None = None, steps: pd.DataFrame | None 
         node_y.append(y)
         role = config.AGENT_ROLES[n]["role"]
         texts.append(f"{role}<br>({n})")
-        colors.append("#f59e0b" if active_agent == n else agent_color(n))
+        colors.append("#d5f74c" if active_agent == n else agent_color(n))
         sizes.append(34 if active_agent == n else 26)
 
     fig = go.Figure()
@@ -78,7 +91,7 @@ def fig_agent_graph(active_agent: str | None = None, steps: pd.DataFrame | None 
             x=node_x,
             y=node_y,
             mode="markers+text",
-            marker=dict(size=sizes, color=colors, line=dict(width=2, color="#0f172a")),
+            marker=dict(size=sizes, color=colors, line=dict(width=2, color="#111111")),
             text=[config.AGENT_ROLES[n]["role"].split()[0] for n in AGENT_ORDER],
             textposition="top center",
             hovertext=texts,
@@ -87,15 +100,15 @@ def fig_agent_graph(active_agent: str | None = None, steps: pd.DataFrame | None 
         )
     )
     fig.update_layout(
-        title="Graphe interactif du système multiagents SOC",
+        title="Agents",
         showlegend=False,
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
         height=360,
         margin=dict(l=20, r=20, t=50, b=20),
-        plot_bgcolor="#f8fafc",
+        plot_bgcolor="#ffffff",
     )
-    return fig
+    return _studio(fig, axes=False)
 
 
 def fig_timeline(steps: pd.DataFrame) -> go.Figure:
@@ -128,10 +141,10 @@ def fig_timeline(steps: pd.DataFrame) -> go.Figure:
         orientation="h",
         hover_data=["Task", "Start", "Finish"],
         color_discrete_map={a: agent_color(a) for a in AGENT_ORDER},
-        title="Timeline / cascade des étapes (durée par agent)",
+        title="Durée",
     )
     fig.update_layout(height=380, xaxis_title="Durée (secondes)", yaxis_title="Agent")
-    return fig
+    return _studio(fig)
 
 
 def fig_sankey(steps: pd.DataFrame) -> go.Figure:
@@ -161,11 +174,11 @@ def fig_sankey(steps: pd.DataFrame) -> go.Figure:
         )
     )
     fig.update_layout(
-        title="Sankey — circulation des jetons / messages entre agents",
+        title="Jetons",
         height=400,
         margin=dict(t=50, l=20, r=20, b=20),
     )
-    return fig
+    return _studio(fig, axes=False)
 
 
 def fig_compare_agents(steps: pd.DataFrame, metric: str = "duration_s") -> go.Figure:
@@ -198,11 +211,11 @@ def fig_compare_agents(steps: pd.DataFrame, metric: str = "duration_s") -> go.Fi
         y=y,
         color="agent",
         color_discrete_map={a: agent_color(a) for a in AGENT_ORDER},
-        title=f"Comparatif par agent — {label_map.get(y, y)}",
+        title=label_map.get(y, y),
         labels={"agent": "Agent", y: label_map.get(y, y)},
     )
     fig.update_layout(showlegend=False, height=380)
-    return fig
+    return _studio(fig)
 
 
 def fig_heatmap(steps: pd.DataFrame, value: str = "duration_s") -> go.Figure:
@@ -211,10 +224,10 @@ def fig_heatmap(steps: pd.DataFrame, value: str = "duration_s") -> go.Figure:
     df = steps.copy()
     if value == "errors":
         df["val"] = (df["status"] == "error").astype(int)
-        title = "Carte thermique — erreurs par scénario × agent"
+        title = "Erreurs"
     else:
         df["val"] = df["duration_s"]
-        title = "Carte thermique — latence moyenne (s) par scénario × agent"
+        title = "Latence"
     pivot = df.pivot_table(
         index="scenario_label",
         columns="agent",
@@ -225,12 +238,12 @@ def fig_heatmap(steps: pd.DataFrame, value: str = "duration_s") -> go.Figure:
     fig = px.imshow(
         pivot,
         aspect="auto",
-        color_continuous_scale="YlOrRd",
+        color_continuous_scale=[[0, "#f4f4f4"], [0.45, "#d5f74c"], [1, "#111111"]],
         title=title,
         labels=dict(color="Valeur"),
     )
     fig.update_layout(height=420)
-    return fig
+    return _studio(fig)
 
 
 def interpretation_bullets(runs: pd.DataFrame, steps: pd.DataFrame) -> list[str]:

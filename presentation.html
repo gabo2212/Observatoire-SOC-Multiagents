@@ -827,20 +827,20 @@
       <div class="slide-content">
         <div class="stack" style="margin-bottom: var(--element-gap);">
           <p class="eyebrow reveal">Deux moteurs</p>
-          <h2 class="reveal reveal-d1">Outils déterministes + LLM local</h2>
+          <h2 class="reveal reveal-d1">Des outils qui calculent, un modèle qui écrit</h2>
         </div>
         <div class="duo reveal reveal-d2">
           <article class="panel stack-meme">
             <div>
               <span class="tag ok">Outils (≥3)</span>
-              <h3>Faits, pas d’invention</h3>
+              <h3>Ils classent les alertes</h3>
               <p class="mono">
                 parse_alert_log<br />
                 lookup_asset_inventory<br />
                 score_risk_rules
               </p>
               <p style="margin-top:0.75rem;font-size:var(--body-size);color:var(--muted);line-height:1.4;">
-                Instantanés. Donnent le socle factuel (alertes, criticité, P1/P2/P3 règles).
+                Même alerte, même réponse : ils lisent le journal, la machine visée, puis classent P1, P2 ou P3.
               </p>
             </div>
             <img class="meme" src="assets/memes/flat-top.jpg" alt="" />
@@ -848,14 +848,14 @@
           <article class="panel stack-meme">
             <div>
               <span class="tag warn">LLM</span>
-              <h3>Raisonnement & rédaction</h3>
+              <h3>Il écrit le résumé</h3>
               <p class="mono">
                 llama-server · GGUF local<br />
                 Qwen3.6-35B-A3B…<br />
                 API OpenAI-compatible :8080
               </p>
               <p style="margin-top:0.75rem;font-size:var(--body-size);color:var(--muted);line-height:1.4;">
-                Plan, synthèse, corrélation narrative, brief. Mode offline = outils + synthèse déterministe.
+                Ça tourne sur cet ordi, pas dans le cloud. Il raconte l’attaque. Sans lui, les outils résument quand même.
               </p>
             </div>
             <img class="meme" src="assets/memes/agent-blue.jpg" alt="" />
