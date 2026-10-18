@@ -149,6 +149,8 @@ Le dashboard Streamlit et le LLM local **ne tournent pas** sur Vercel — unique
 - [docs/presentation_outline.md](docs/presentation_outline.md) — démo 10–12 min  
 - [docs/checklist.md](docs/checklist.md) — grille / liste de vérification  
 - [presentation.html](presentation.html) — deck HTML (8 slides)  
+- [docs/tech-stack-report.canvas.tsx](docs/tech-stack-report.canvas.tsx) — pile technique, pipeline et traces (canvas)  
+- [docs/api-mvt-setup.canvas.tsx](docs/api-mvt-setup.canvas.tsx) — API Flask, couches modèle / vue / template, et écart avec l’ancien accès direct (canvas)  
 
 ## Licence pédagogique
 
