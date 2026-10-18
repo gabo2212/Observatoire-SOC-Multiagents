@@ -373,7 +373,7 @@
           <tr><td>Datasets</td><td>data/datasets/&lt;id&gt;/</td><td>manifest.json, alerts.json, optional assets.json</td></tr>
           <tr><td>Imports</td><td>pipeline/datasets.py</td><td>JSON or ZIP, validated before a mission can use them</td></tr>
           <tr><td>Traces</td><td>data/traces/observatory.db</td><td>runs and steps</td></tr>
-          <tr><td>Demo seed</td><td>data/traces/demo_runs.json</td><td>Loaded by pipeline/seed.py so the UI is not empty</td></tr>
+          <tr><td>Demo seed</td><td>data/traces/demo_runs.json</td><td>TraceStore.seed_if_empty on Flask startup, when the database has no runs</td></tr>
           <tr><td>Live file</td><td>data/traces/live_status.json</td><td>Current agent, phase, progress, latest output</td></tr>
         </tbody>
       </table>
@@ -455,14 +455,126 @@
         <tbody>
           <tr><td>pipeline/tracing.py</td><td>TraceStore. Opens the file, creates tables, inserts, updates, lists, exports</td></tr>
           <tr><td>pipeline/crew_runner.py</td><td>The only writer during a mission: start_run, add_step, finish_run</td></tr>
-          <tr><td>pipeline/seed.py</td><td>If runs is empty, copies data/traces/demo_runs.json in so the first dashboard open is not blank</td></tr>
-          <tr><td>dashboard/data_loader.py</td><td>list_runs and get_steps become pandas frames. Every chart and KPI starts here</td></tr>
+          <tr><td>backend/app.py</td><td>Flask owns writes. Startup calls TraceStore.seed_if_empty so the first open is not blank</td></tr>
+          <tr><td>dashboard/data_loader.py</td><td>GET /api/runs becomes pandas frames. Every chart and KPI starts here</td></tr>
           <tr><td>dashboard/app.py</td><td>Run picker, replay, comparison, and the final brief all use those frames</td></tr>
-          <tr><td>scripts/export_traces.py</td><td>export_json writes the whole database back out as demo-style JSON</td></tr>
-          <tr><td>scripts/run_batch.py</td><td>Many missions, same TraceStore, so Comparer has more than one run</td></tr>
+          <tr><td>scripts/export_traces.py</td><td>POST /api/runs/export writes the database back out as demo-style JSON</td></tr>
+          <tr><td>scripts/run_batch.py</td><td>Many missions through POST /api/runs, so Comparer has more than one run</td></tr>
         </tbody>
       </table>
       <p>Each call opens a connection, sets <code>row_factory</code> to <code>sqlite3.Row</code>, commits, and closes. There is no pool and no background writer. The dashboard never sends SQL of its own. It asks TraceStore for dicts, and pandas does the averages: success rate, mean duration, token sums, the most used agent, and the slowest agent.</p>
+    </section>
+
+    <hr class="rule" />
+
+    <section class="block">
+      <h2>How the backend talks to the frontend (MVT)</h2>
+      <p>Model, View, and Template share one Streamlit process. The Model keeps the rows. The View loads those rows and decides what to show. The Template draws the page. There is no second server and no JSON API between them.</p>
+      <table>
+        <thead><tr><th>Role</th><th>Job</th><th>Files in this project</th></tr></thead>
+        <tbody>
+          <tr><td>Model</td><td>Stores missions and the facts the agents used. Knows nothing about buttons or charts.</td><td>pipeline/tracing.py, tools/, data/alerts, data/inventory</td></tr>
+          <tr><td>View</td><td>Loads the Model, builds tables and figures, and starts a mission when a button is clicked.</td><td>dashboard/app.py, dashboard/data_loader.py, dashboard/charts.py</td></tr>
+          <tr><td>Template</td><td>Draws the page. Receives frames and figures. Never opens observatory.db.</td><td>Streamlit widgets, dashboard/studio.css, Plotly.js in the browser</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Model — pipeline/tracing.py</h3>
+      <p>This is the only SQL. <code>list_runs</code> and <code>get_steps</code> return dicts. The View calls them. The Template never does.</p>
+      <pre>def list_runs(self) -&gt; list[dict[str, Any]]:
+    with self._conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM runs ORDER BY started_at DESC"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+def get_steps(self, run_id: str) -&gt; list[dict[str, Any]]:
+    with self._conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM steps WHERE run_id = ? ORDER BY step_index",
+            (run_id,),
+        ).fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        for key in ("tools_used", "errors", "messages_to"):
+            d[key] = json.loads(d[key] or "[]")
+        out.append(d)
+    return out</pre>
+
+      <h3>View reads the Model — dashboard/data_loader.py, dashboard/app.py</h3>
+      <p><code>runs_df</code> and <code>steps_df</code> turn those dicts into frames. The Résultat tab then asks <code>charts.py</code> for figures and passes them to the Template.</p>
+      <pre>def runs_df(store: TraceStore | None = None) -&gt; pd.DataFrame:
+    store = store or get_store()
+    rows = store.list_runs()
+    if not rows:
+        return pd.DataFrame()
+    return pd.DataFrame(rows)
+
+def steps_df(store: TraceStore | None = None) -&gt; pd.DataFrame:
+    store = store or get_store()
+    frames = []
+    for run in store.list_runs():
+        for s in store.get_steps(run["run_id"]):
+            s = dict(s)
+            s["scenario"] = run.get("scenario")
+            frames.append(s)
+    return pd.DataFrame(frames)
+
+# dashboard/app.py — Résultat tab
+runs = runs_df(store)
+steps = steps_df(store)
+run_meta = store.get_run(selected_run) or {}
+run_steps = steps[steps["run_id"] == selected_run].sort_values("step_index")
+chart(fig_agent_graph(active_agent=active), key="analyze_graph")
+chart(fig_timeline(run_steps), key="analyze_timeline")
+chart(fig_sankey(run_steps), key="analyze_sankey")</pre>
+
+      <h3>View writes the Model — dashboard/app.py, pipeline/crew_runner.py</h3>
+      <p>Démarrer calls <code>run_scenario</code>. The crew inserts the run, inserts one step per agent, and emits <code>on_progress</code> so the Template can update before the script finishes. <code>focus_run</code> is what the next rerun reads back from SQLite.</p>
+      <pre># pipeline/crew_runner.py
+run_id = self.store.start_run(scenario_key, mission, model, scenario_label=meta.get("label"))
+self.store.add_step(run_id, step_index, step)
+self._emit(on_progress, {"state": "running", "agent": name, "progress": step_index / total_steps})
+
+# dashboard/app.py
+def on_progress(event: dict) -&gt; None:
+    prog = float(event.get("progress") or 0)
+    msg = event.get("message") or ""
+    placeholders["progress"].progress(min(max(prog, 0.02), 1.0), text=msg)
+    with placeholders["graph"].container():
+        live_chart(fig_agent_graph(active_agent=event.get("agent")))
+
+result = crew.run_scenario(scenario, on_progress=on_progress, force_tools_only=use_offline)
+if result:
+    st.session_state.focus_run = result["run_id"]</pre>
+
+      <h3>Template — dashboard/app.py</h3>
+      <p><code>chart</code> is the handoff. The View built the figure. This function only sends it to the browser. The metrics and the text area below read fields the View already pulled off the Model.</p>
+      <pre>def chart(fig, key: str) -&gt; None:
+    st.plotly_chart(
+        fig,
+        width="stretch",
+        key=key,
+        config={"displayModeBar": False, "responsive": True},
+    )
+
+m1.metric("Statut", run_meta.get("status") or "—")
+m2.metric("Qualité", run_meta.get("quality_score") or 0)
+m3.metric("Durée", f"{round(float(run_meta.get('total_duration_s') or 0), 1)} s")
+st.text_area("Ce que l'agent a produit", row.get("raw_output") or "")
+st.write(run_meta.get("final_result") or "—")</pre>
+
+      <h3>The two paths, side by side</h3>
+      <table>
+        <thead><tr><th>Path</th><th>When</th><th>What moves</th></tr></thead>
+        <tbody>
+          <tr><td>Model → View → Template</td><td>Every rerun of Analyser and Comparer</td><td>SQLite rows → DataFrames → Plotly figures and tables</td></tr>
+          <tr><td>Template → View → Model</td><td>Click on Démarrer</td><td>Button → run_scenario → new runs and steps rows</td></tr>
+          <tr><td>View → Template, live</td><td>During the six agents</td><td>on_progress updates the checklist. live_status.json is the copy a refresh can still read.</td></tr>
+        </tbody>
+      </table>
+      <p class="small">The Vercel pages are a Template with no Model. index.html and presentation.html never call TraceStore. Only the Streamlit observatory is the MVT loop above.</p>
     </section>
 
     <hr class="rule" />
@@ -514,7 +626,7 @@
               <tr><td>pipeline/tracing.py</td><td>SQLite TraceStore</td></tr>
               <tr><td>pipeline/live_status.py</td><td>Live JSON for the UI</td></tr>
               <tr><td>pipeline/datasets.py</td><td>Validate and import datasets</td></tr>
-              <tr><td>pipeline/seed.py</td><td>Demo traces</td></tr>
+              <tr><td>backend/app.py</td><td>Flask API: runs, live status, sites, datasets</td></tr>
               <tr><td>tools/*.py</td><td>Alerts, inventory, risk, user sites</td></tr>
               <tr><td>scripts/*.sh, scripts/*.py</td><td>Setup, model, batch, export</td></tr>
             </tbody>

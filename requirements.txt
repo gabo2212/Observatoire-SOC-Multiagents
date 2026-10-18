@@ -3,6 +3,7 @@ crewai>=0.80.0
 langchain-openai>=0.2.0
 openai>=1.40.0
 streamlit>=1.38.0
+flask>=3.0.0
 plotly>=5.24.0
 pandas>=2.2.0
 numpy>=1.26.0

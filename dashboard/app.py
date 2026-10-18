@@ -5,6 +5,7 @@ Lancement depuis l'UI + suivi live des agents.
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -15,6 +16,8 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import config
+from backend.client import ApiError, ObservatoryClient
+from dashboard.live_feed import live_note
 from dashboard.charts import (
     AGENT_ORDER,
     fig_agent_graph,
@@ -24,24 +27,7 @@ from dashboard.charts import (
     fig_timeline,
     interpretation_bullets,
 )
-from dashboard.data_loader import filter_runs, get_store, kpi_dict, runs_df, steps_df
-from pipeline.crew_runner import SOCObservatoryCrew
-from pipeline.datasets import (
-    ensure_runtime_files,
-    import_alerts_json,
-    import_dataset_zip,
-    list_datasets,
-)
-from pipeline.live_status import read_live
-from pipeline.llm import llm_ready
-from pipeline.seed import ensure_demo_data
-from tools.sites import (
-    add_user_site,
-    build_alerts_for_targets,
-    delete_user_site,
-    load_full_inventory,
-    load_user_sites,
-)
+from dashboard.data_loader import fetch_runs, filter_runs, kpi_dict, runs_df, steps_df
 
 st.set_page_config(page_title=config.PROJECT_TITLE, layout="wide")
 
@@ -61,31 +47,28 @@ def chart(fig, key: str) -> None:
     )
 
 
-_live_tick = 0
-
-
-def live_chart(fig) -> None:
-    """Chart inside live callback — must get a fresh key each update."""
-    global _live_tick
-    _live_tick += 1
-    st.plotly_chart(
-        fig,
-        width="stretch",
-        key=f"live_graph_{_live_tick}",
-        config={"displayModeBar": False, "responsive": True},
-    )
-
-
 def agent_checklist(completed: list[str], active: str | None) -> None:
     cols = st.columns(len(AGENT_ORDER))
     for col, key in zip(cols, AGENT_ORDER):
         role = config.AGENT_ROLES[key]["role"]
-        if key in completed:
+        if key == active:
+            col.warning(f"En cours\n\n**{role}**")
+        elif key in completed:
             col.success(f"OK\n\n**{role}**")
-        elif key == active:
-            col.warning(f"…\n\n**{role}**")
         else:
-            col.info(f"○\n\n**{role}**")
+            col.info(f"En attente\n\n**{role}**")
+
+
+def render_live_journal(box, entries: list[str]) -> None:
+    """Newest entry first, so the latest line is the top of the journal."""
+    with box.container():
+        st.markdown("#### Journal live")
+        if not entries:
+            st.caption("En attente du premier message.")
+            return
+        for entry in reversed(entries[-8:]):
+            st.markdown(entry)
+            st.divider()
 
 
 def friendly_run_label(run: dict) -> str:
@@ -123,7 +106,14 @@ def studio_chrome(llm_online: bool) -> None:
 
 
 # ── Header ──────────────────────────────────────────────
-ready = llm_ready()
+client = ObservatoryClient()
+try:
+    health = client.health()
+except ApiError as exc:
+    st.error(str(exc))
+    st.stop()
+
+ready = bool(health.get("llm_ready"))
 studio_chrome(ready)
 
 if not ready:
@@ -131,9 +121,6 @@ if not ready:
         "Démarrez le modèle: `bash scripts/start_llm.sh` — "
         "sinon utilisez le mode **Rapide** dans l'onglet Lancer."
     )
-
-store = get_store()
-ensure_demo_data(store)
 
 tab_launch, tab_analyze, tab_compare = st.tabs(["Lancer", "Résultat", "Comparer"])
 
@@ -157,12 +144,16 @@ with tab_launch:
     )
 
     custom_targets: list[str] = []
-    scenario = list(config.SCENARIOS.keys())[0]
+    scenario_rows = client.scenarios()
+    scenario_keys = [row["key"] for row in scenario_rows]
+    scenario_labels = {row["key"]: row["label"] for row in scenario_rows}
+    scenario_missions = {row["key"]: row["mission"] for row in scenario_rows}
+    scenario = scenario_keys[0] if scenario_keys else ""
     selected_ds = st.session_state.get("selected_dataset")
     pattern = ("web_probe", "Sondes web")
 
     if mission_mode.startswith("Dataset"):
-        datasets = [d for d in list_datasets() if d["compatible"]]
+        datasets = [d for d in client.datasets() if d["compatible"]]
         if not datasets:
             st.error("Aucun dataset compatible.")
         else:
@@ -184,17 +175,15 @@ with tab_launch:
             if meta.get("mission"):
                 st.caption(meta["mission"])
     elif mission_mode.startswith("Scénario"):
-        scenario_keys = list(config.SCENARIOS.keys())
-        labels = {k: config.SCENARIOS[k]["label"] for k in scenario_keys}
         scenario = st.selectbox(
             "Scénario",
             scenario_keys,
-            format_func=lambda k: labels[k],
+            format_func=lambda k: scenario_labels[k],
             key="launch_scenario",
         )
-        st.caption(config.SCENARIOS[scenario]["mission"])
+        st.caption(scenario_missions.get(scenario) or "")
     else:
-        inventory = load_full_inventory()
+        inventory = client.inventory()
         user_only = [a for a in inventory if a.get("source") == "user"]
         choices = user_only or inventory
         if not user_only:
@@ -244,7 +233,7 @@ with tab_launch:
             submitted = st.form_submit_button("Ajouter")
         if submitted:
             try:
-                row = add_user_site(
+                row = client.add_site(
                     hostname=hostname,
                     name=name or None,
                     site_type=site_type,
@@ -252,9 +241,9 @@ with tab_launch:
                     zone=zone,
                 )
                 st.success(f"Ajouté : {row['hostname']}")
-            except Exception as exc:  # noqa: BLE001
+            except ApiError as exc:
                 st.error(str(exc))
-        user_sites = load_user_sites()
+        user_sites = client.sites()
         if user_sites:
             st.dataframe(user_sites, width="stretch")
             del_id = st.selectbox(
@@ -265,7 +254,7 @@ with tab_launch:
                 ),
             )
             if st.button("Retirer cette cible"):
-                delete_user_site(del_id)
+                client.delete_site(del_id)
                 st.rerun()
 
     with st.expander("Importer un dataset"):
@@ -275,16 +264,12 @@ with tab_launch:
         up_zip = st.file_uploader("dataset.zip", type=["zip"], key="up_zip")
         import_name = st.text_input("Nom", value="Mon import")
         if st.button("Importer"):
-            if up_zip is not None:
-                imported = import_dataset_zip(up_zip.getvalue(), fallback_name=import_name)
-            elif up_alerts is not None:
-                imported = import_alerts_json(
-                    up_alerts.getvalue(),
-                    name=import_name,
-                    assets_raw=up_assets.getvalue() if up_assets else None,
-                )
-            else:
-                imported = {"ok": False, "validation": {"errors": ["Ajoutez un JSON ou un ZIP."]}}
+            imported = client.import_dataset(
+                name=import_name,
+                zip_bytes=up_zip.getvalue() if up_zip is not None else None,
+                alerts=up_alerts.getvalue() if up_alerts is not None else None,
+                assets=up_assets.getvalue() if up_assets is not None else None,
+            )
             if imported.get("ok"):
                 st.session_state.selected_dataset = imported["dataset_id"]
                 st.success(f"Importé : {imported['dataset_id']}")
@@ -295,91 +280,86 @@ with tab_launch:
 
     if start:
         st.session_state.live_log = []
-        crew = SOCObservatoryCrew(store=store)
         progress_bar = st.progress(0, text="Démarrage")
         status_line = st.empty()
         checklist_box = st.empty()
         graph_box = st.empty()
         output_box = st.empty()
+        result = None
+        run_id = None
+        try:
+            body: dict = {"force_tools_only": use_offline}
+            if mission_mode.startswith("Dataset"):
+                if not selected_ds:
+                    raise ValueError("Choisissez un dataset.")
+                body["dataset_id"] = selected_ds
+            elif mission_mode.startswith("Mes"):
+                if not custom_targets:
+                    raise ValueError("Sélectionnez au moins une cible.")
+                body["targets"] = custom_targets
+                body["pattern"] = pattern[0]
+            else:
+                body["scenario"] = scenario
+            accepted = client.start_run(body)
+            run_id = accepted["run_id"]
+        except (ApiError, ValueError) as exc:
+            st.error(f"Échec de la mission: {exc}")
 
-        placeholders = {
-            "progress": progress_bar,
-            "status": status_line,
-            "checklist": checklist_box,
-            "graph": graph_box,
-            "output": output_box,
-        }
-
-        def on_progress(event: dict) -> None:
-            agent = event.get("agent")
-            completed = event.get("completed_agents") or []
-            prog = float(event.get("progress") or 0)
-            msg = event.get("message") or ""
-            placeholders["progress"].progress(min(max(prog, 0.02), 1.0), text=msg)
-            placeholders["status"].info(msg)
-            with placeholders["checklist"].container():
-                agent_checklist(completed, agent if event.get("phase") == "agent_start" else None)
-            with placeholders["graph"].container():
-                live_chart(fig_agent_graph(active_agent=agent))
-            latest = event.get("latest_output") or ""
-            if latest and event.get("phase") in ("agent_done", "finished", "tools"):
-                st.session_state.live_log.append(
-                    f"**{event.get('agent_role') or event.get('agent') or 'Système'}** — {msg}\n\n{latest[:800]}"
-                )
-            with placeholders["output"].container():
-                st.markdown("#### Journal live")
-                for entry in reversed(st.session_state.live_log[-6:]):
-                    st.markdown(entry)
-                    st.divider()
-
-        run_kwargs: dict = {
-            "force_tools_only": use_offline,
-            "on_progress": on_progress,
-        }
-
-        with st.spinner("Les agents travaillent… ne fermez pas cet onglet"):
+        if run_id:
+            seen: set[tuple] = set()
+            seen_output: set[str] = set()
+            shown_agents = None
+            shown_msg = None
+            graph_draw = 0
+            render_live_journal(output_box, [])
+            with st.spinner("Les agents travaillent… ne fermez pas cet onglet"):
+                deadline = time.time() + 3600
+                while time.time() < deadline:
+                    live_now = client.live()
+                    if live_now.get("run_id") not in (None, run_id):
+                        time.sleep(0.4)
+                        continue
+                    agent = live_now.get("agent")
+                    completed = tuple(live_now.get("completed_agents") or [])
+                    prog = float(live_now.get("progress") or 0)
+                    msg = live_now.get("message") or ""
+                    phase = live_now.get("phase")
+                    progress_bar.progress(min(max(prog, 0.02), 1.0), text=msg or "En cours")
+                    if msg != shown_msg:
+                        status_line.info(msg or "En cours")
+                        shown_msg = msg
+                    highlight = agent if phase == "agent_start" else None
+                    visual = (agent, completed, highlight)
+                    if visual != shown_agents:
+                        shown_agents = visual
+                        graph_draw += 1
+                        with checklist_box.container():
+                            agent_checklist(list(completed), highlight)
+                        with graph_box.container():
+                            chart(
+                                fig_agent_graph(active_agent=highlight or agent),
+                                key=f"live_agent_graph_{graph_draw}",
+                            )
+                    note = live_note(live_now, seen, seen_output)
+                    if note:
+                        st.session_state.live_log.append(note)
+                        render_live_journal(output_box, st.session_state.live_log)
+                    state = live_now.get("state")
+                    if state == "failed":
+                        st.error(live_now.get("message") or "Échec de la mission")
+                        break
+                    if live_now.get("run_id") == run_id and state == "done":
+                        break
+                    time.sleep(0.6)
+                else:
+                    st.error("Délai dépassé en attendant la mission")
             try:
-                if mission_mode.startswith("Dataset"):
-                    if not selected_ds:
-                        raise ValueError("Choisissez un dataset.")
-                    prepared = ensure_runtime_files(selected_ds)
-                    run_kwargs.update(
-                        {
-                            "alert_file": prepared["alert_file"],
-                            "label_override": prepared["label"],
-                            "mission_override": prepared["mission"],
-                        }
-                    )
-                    scenario = f"dataset_{selected_ds}"
-                elif mission_mode.startswith("Mes"):
-                    if not custom_targets:
-                        raise ValueError("Sélectionnez au moins une cible.")
-                    alert_path, _alerts = build_alerts_for_targets(
-                        custom_targets, pattern=pattern[0]
-                    )
-                    hosts = [
-                        a.get("hostname")
-                        for a in load_full_inventory()
-                        if a["asset_id"] in custom_targets
-                    ]
-                    run_kwargs.update(
-                        {
-                            "alert_file": str(alert_path),
-                            "label_override": "Mission cibles personnelles",
-                            "mission_override": (
-                                "Trier et prioriser les alertes synthétiques visant: "
-                                + ", ".join(hosts)
-                                + ". Produire un brief P1/P2/P3 pour ces actifs."
-                            ),
-                        }
-                    )
-                    scenario = "user_custom"
-                result = crew.run_scenario(scenario, **run_kwargs)
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"Échec de la mission: {exc}")
+                result = client.get_run(run_id)
+            except ApiError as exc:
+                st.error(str(exc))
                 result = None
 
-        if result:
+        if result and result.get("status") != "running":
             st.session_state.focus_run = result["run_id"]
             progress_bar.progress(1.0, text="Terminé")
             status_line.success(
@@ -390,17 +370,18 @@ with tab_launch:
             st.write(result.get("final_result") or "")
             st.caption("Le détail est dans Résultat.")
 
-    live = read_live()
+    live = client.live()
     if not start and live.get("state") == "running":
-        st.warning("Une mission semble déjà en cours (fichier live_status). Rafraîchissez la page.")
+        st.warning("Une mission est déjà en cours. Rafraîchissez la page.")
         st.json({k: live.get(k) for k in ("run_id", "scenario_label", "message", "agent", "progress")})
 
 # ════════════════════════════════════════════════════════
 # TAB 2 — Analyze
 # ════════════════════════════════════════════════════════
 with tab_analyze:
-    runs = runs_df(store)
-    steps = steps_df(store)
+    rows = fetch_runs()
+    runs = runs_df(rows)
+    steps = steps_df(rows)
 
     if runs.empty:
         st.warning("Aucune exécution. Lancez une mission d'abord.")
@@ -425,7 +406,7 @@ with tab_analyze:
         )
         st.session_state.focus_run = selected_run
 
-        run_meta = store.get_run(selected_run) or {}
+        run_meta = next((row for row in rows if row["run_id"] == selected_run), {})
         run_steps = steps[steps["run_id"] == selected_run].sort_values("step_index")
 
         tokens = int(run_meta.get("total_tokens_in") or 0) + int(
@@ -488,8 +469,9 @@ with tab_analyze:
 # TAB 3 — Compare / KPIs
 # ════════════════════════════════════════════════════════
 with tab_compare:
-    runs = runs_df(store)
-    steps = steps_df(store)
+    rows = fetch_runs()
+    runs = runs_df(rows)
+    steps = steps_df(rows)
 
     st.markdown(
         '<p class="vis-kicker">Synthèse</p><h2 class="vis-page">Comparer</h2>',
@@ -566,7 +548,8 @@ with tab_compare:
                 ),
                 key="cmp_b",
             )
-        ra, rb = store.get_run(run_a) or {}, store.get_run(run_b) or {}
+        by_id = {row["run_id"]: row for row in rows}
+        ra, rb = by_id.get(run_a, {}), by_id.get(run_b, {})
         st.dataframe(
             pd.DataFrame(
                 [

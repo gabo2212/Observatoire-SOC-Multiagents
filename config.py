@@ -27,6 +27,8 @@ GGUF_PATH = os.getenv(
 N_GPU_LAYERS = int(os.getenv("N_GPU_LAYERS", "30"))
 CTX_SIZE = int(os.getenv("CTX_SIZE", "8192"))
 PORT = int(os.getenv("PORT", "8080"))
+API_PORT = int(os.getenv("API_PORT", "5000"))
+OBSERVATORY_API_BASE = os.getenv("OBSERVATORY_API_BASE", f"http://127.0.0.1:{API_PORT}")
 
 COST_PER_1M_INPUT = float(os.getenv("COST_PER_1M_INPUT", "0.0"))
 COST_PER_1M_OUTPUT = float(os.getenv("COST_PER_1M_OUTPUT", "0.0"))

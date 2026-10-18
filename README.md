@@ -3,7 +3,7 @@
 Tableau de bord interactif + système multiagents pour **trier et prioriser des alertes de cybersécurité** à partir de **journaux 100 % synthétiques** (ACME-LAB).
 
 Cours : **420-VD2-ID** — Visualisation et interprétation des données 2  
-Stack : **CrewAI · Streamlit · Plotly · llama-server (GGUF local)**  
+Stack : **CrewAI · Flask · Streamlit · Plotly · llama-server (GGUF local)**  
 Modèle : `Qwen3.6-35B-A3B-Heretic-Cerebellum-v1-Q3_K_M.gguf`
 
 ## Architecture
@@ -23,7 +23,7 @@ Outils (≥2) :
 - `lookup_asset_inventory`  
 - `score_risk_rules`  
 
-Traces structurées → SQLite `data/traces/observatory.db` → dashboard Streamlit.
+Traces structurées → SQLite `data/traces/observatory.db`, écrites uniquement par l'API Flask. Streamlit et les scripts CLI parlent à `http://127.0.0.1:5000`.
 
 ## Prérequis
 
@@ -72,7 +72,19 @@ bash scripts/start_llm.sh
 
 Sur 12 Go VRAM, ajuster `N_GPU_LAYERS` dans `.env` (25–35).
 
+## Démarrer l'API
+
+L'API Flask est le seul processus qui écrit SQLite, le statut live, les sites et les datasets. Démarrez-la avant le tableau de bord et avant les scripts.
+
+```bash
+source .venv/bin/activate
+python -m backend.app
+# http://127.0.0.1:5000
+```
+
 ## Collecter des traces (≥20 exécutions / 5 scénarios)
+
+L'API doit tourner. Les scripts lancent chaque mission par HTTP, puis attendent la fin.
 
 ```bash
 source .venv/bin/activate
@@ -90,6 +102,8 @@ Scénarios : `bruteforce_ssh`, `phishing_creds`, `ransomware_precursor`, `noisy_
 
 ## Tableau de bord
 
+L'API doit déjà tourner (`python -m backend.app`).
+
 ```bash
 source .venv/bin/activate
 streamlit run dashboard/app.py
@@ -102,8 +116,9 @@ Fonctions : KPI, graphe multiagents, timeline, Sankey, comparatifs, heatmap, fil
 ```
 agents/           # descriptions des rôles
 tools/            # parse_alert_log, inventory, risk rules
+backend/          # API Flask (seul écrivain) + client HTTP
 pipeline/         # CrewAI runner, LLM client, tracing SQLite
-dashboard/        # Streamlit + Plotly
+dashboard/        # Streamlit + Plotly (client de l'API)
 data/alerts/      # journaux synthétiques (5 scénarios)
 data/inventory/   # actifs ACME-LAB
 data/traces/      # observatory.db + export JSON

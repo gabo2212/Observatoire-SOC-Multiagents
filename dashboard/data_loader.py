@@ -1,4 +1,4 @@
-"""Load runs/steps from SQLite for the Streamlit dashboard."""
+"""Load runs and steps from the observatory API for the Streamlit dashboard."""
 from __future__ import annotations
 
 import json
@@ -12,32 +12,31 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from pipeline.tracing import TraceStore
+from backend.client import ObservatoryClient
 
 
-def get_store() -> TraceStore:
-    return TraceStore()
+def fetch_runs() -> list[dict[str, Any]]:
+    return ObservatoryClient().runs()
 
 
-def runs_df(store: TraceStore | None = None) -> pd.DataFrame:
-    store = store or get_store()
-    rows = store.list_runs()
-    if not rows:
+def runs_df(rows: list[dict[str, Any]] | None = None) -> pd.DataFrame:
+    rows = fetch_runs() if rows is None else rows
+    slim = [{key: value for key, value in row.items() if key != "steps"} for row in rows]
+    if not slim:
         return pd.DataFrame()
-    return pd.DataFrame(rows)
+    return pd.DataFrame(slim)
 
 
-def steps_df(store: TraceStore | None = None) -> pd.DataFrame:
-    store = store or get_store()
+def steps_df(rows: list[dict[str, Any]] | None = None) -> pd.DataFrame:
+    rows = fetch_runs() if rows is None else rows
     frames = []
-    for run in store.list_runs():
-        steps = store.get_steps(run["run_id"])
-        for s in steps:
-            s = dict(s)
-            s["scenario"] = run.get("scenario")
-            s["scenario_label"] = run.get("scenario_label")
-            s["run_status"] = run.get("status")
-            frames.append(s)
+    for run in rows:
+        for step in run.get("steps") or []:
+            step = dict(step)
+            step["scenario"] = run.get("scenario")
+            step["scenario_label"] = run.get("scenario_label")
+            step["run_status"] = run.get("status")
+            frames.append(step)
     if not frames:
         return pd.DataFrame()
     return pd.DataFrame(frames)
