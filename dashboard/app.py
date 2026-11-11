@@ -2,6 +2,14 @@
 Observatoire interactif — triage multiagents d'alertes SOC (sujet A5).
 Lancement depuis l'UI + suivi live des agents.
 """
+
+#Claudia a ajouté un commentaire ici pour le fichier app.py
+# Ce fichier contient le code principal de l'application Streamlit pour l'observatoire SOC multiagents.
+# Importation des modules nécessaires et configuration du chemin d'accès racine.
+# Ce fichier configure également le chemin d'accès racine pour permettre l'importation des modules locaux.
+# Définition du chemin d'accès racine de l'application.
+# Ce chemin est utilisé pour s'assurer que les modules locaux peuvent être importés correctement.
+
 from __future__ import annotations
 
 import sys
