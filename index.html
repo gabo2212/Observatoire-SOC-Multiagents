@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Observatoire SOC — Triage multiagents</title>
+  <meta name="description" content="Observatoire SOC : pipeline CrewAI de 6 agents pour trier et prioriser des alertes de cybersécurité synthétiques." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --fg: #f5f5f5;
+      --muted: #a3a3a3;
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.16);
+      --panel: #141414;
+      --line: #2a2a2a;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --pad: clamp(1.25rem, 4vw, 3.5rem);
+      --max: 68rem;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem var(--pad);
+      background: linear-gradient(to bottom, rgba(10,10,10,0.92), rgba(10,10,10,0));
+    }
+
+    .nav-brand {
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: 0.95rem;
+    }
+
+    .nav-brand span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .nav-links a:not(.btn) {
+      color: var(--muted);
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:not(.btn):hover { color: var(--fg); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.7rem 1.15rem;
+      border-radius: 0.35rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #1d4ed8; }
+
+    .btn-ghost {
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--fg);
+    }
+
+    .btn-ghost:hover { border-color: #404040; }
+
+    /* Hero — one composition, brand first */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: calc(5rem + var(--pad)) var(--pad) var(--pad);
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 20%, rgba(37, 99, 235, 0.28), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 15% 80%, rgba(34, 197, 94, 0.08), transparent 50%),
+        linear-gradient(180deg, #0c1220 0%, #0a0a0a 55%, #0a0a0a 100%);
+      z-index: 0;
+    }
+
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.35;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 70% 60% at 60% 40%, black, transparent);
+      animation: grid-drift 28s linear infinite;
+    }
+
+    @keyframes grid-drift {
+      from { background-position: 0 0, 0 0; }
+      to { background-position: 48px 48px, 48px 48px; }
+    }
+
+    .hero-scan {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      z-index: 2;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.55;
+      animation: scan 6.5s ease-in-out infinite;
+    }
+
+    @keyframes scan {
+      0%, 100% { top: 18%; opacity: 0; }
+      15% { opacity: 0.55; }
+      85% { opacity: 0.35; }
+      100% { top: 78%; opacity: 0; }
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 3;
+      max-width: var(--max);
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .brand {
+      font-size: clamp(2.4rem, 8vw, 5.5rem);
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      line-height: 0.95;
+      margin-bottom: 1.25rem;
+      animation: rise 0.8s ease both;
+    }
+
+    .brand em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .hero h1 {
+      font-size: clamp(1.15rem, 2.4vw, 1.65rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      max-width: 28ch;
+      margin-bottom: 0.75rem;
+      animation: rise 0.8s ease 0.1s both;
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+      max-width: 42ch;
+      margin-bottom: 1.75rem;
+      animation: rise 0.8s ease 0.18s both;
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      animation: rise 0.8s ease 0.26s both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    section {
+      padding: clamp(3.5rem, 8vw, 6rem) var(--pad);
+      border-top: 1px solid var(--line);
+    }
+
+    .section-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    section h2 {
+      font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.65rem;
+    }
+
+    .lede {
+      color: var(--muted);
+      max-width: 48ch;
+      margin-bottom: 2rem;
+      font-size: 1.05rem;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .pipeline { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .agent {
+      border: 1px solid var(--line);
+      background: linear-gradient(160deg, rgba(37,99,235,0.08), transparent 60%), var(--panel);
+      padding: 1rem 0.9rem;
+      min-height: 8.5rem;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .agent:hover {
+      border-color: rgba(37, 99, 235, 0.55);
+      transform: translateY(-2px);
+    }
+
+    .agent-n {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 0.45rem;
+    }
+
+    .agent h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.35rem;
+    }
+
+    .agent p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chip {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 0.4rem 0.7rem;
+      background: var(--panel);
+    }
+
+    .note {
+      margin-top: 1.75rem;
+      padding: 1rem 1.15rem;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--muted);
+      font-size: 0.9rem;
+      max-width: 52ch;
+    }
+
+    .note strong { color: var(--fg); font-weight: 700; }
+
+    .local-steps {
+      display: grid;
+      gap: 0.75rem;
+      max-width: 40rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      padding: 0.9rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .step:last-child { border-bottom: 0; }
+
+    .step-n {
+      width: 1.75rem;
+      height: 1.75rem;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .step h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .step p, .step code {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .step code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #c4d4f5;
+    }
+
+    footer {
+      padding: 2rem var(--pad) 3rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    footer .section-inner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    footer a { color: var(--fg); font-weight: 600; }
+    footer a:hover { color: var(--accent); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav" aria-label="Navigation principale">
+    <a class="nav-brand" href="/">Observatoire <span>SOC</span></a>
+    <div class="nav-links">
+      <a href="#pipeline">Pipeline</a>
+      <a href="#local">Local</a>
+      <a class="btn btn-primary" href="/presentation">Slides</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="hero-scan" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="brand">Observatoire <em>SOC</em></p>
+      <h1>Triage multiagents d’alertes, de bout en bout.</h1>
+      <p>
+        Six agents CrewAI enchaînent outils et LLM local pour classer,
+        corréler et prioriser des journaux synthétiques ACME-LAB.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="/presentation">Ouvrir les slides</a>
+        <a class="btn btn-ghost" href="#pipeline">Voir le pipeline</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="pipeline">
+    <div class="section-inner">
+      <p class="section-label">Pipeline</p>
+      <h2>Six agents, une mission séquentielle</h2>
+      <p class="lede">
+        Chaque étape a un rôle clair. Les outils font le travail déterministe ;
+        le LLM local synthétise et décide.
+      </p>
+      <div class="pipeline">
+        <article class="agent">
+          <p class="agent-n">01</p>
+          <h3>Coordonnateur</h3>
+          <p>Décompose la mission et orchestre le flux.</p>
+        </article>
+        <article class="agent">
+          <p class="agent-n">02</p>
+          <h3>Collecteur</h3>
+          <p>Charge alertes + inventaire via outils.</p>
+        </article>
+        <article class="agent">
+          <p class="agent-n">03</p>
+          <h3>Classificateur</h3>
+          <p>Type, gravité, faux positifs.</p>
+        </article>
+        <article class="agent">
+          <p class="agent-n">04</p>
+          <h3>Corrélateur</h3>
+          <p>Campagnes et chaînes d’attaque.</p>
+        </article>
+        <article class="agent">
+          <p class="agent-n">05</p>
+          <h3>Évaluateur</h3>
+          <p>Score de risque + vérification.</p>
+        </article>
+        <article class="agent">
+          <p class="agent-n">06</p>
+          <h3>Rapporteur</h3>
+          <p>Brief final P1 / P2 / P3.</p>
+        </article>
+      </div>
+      <div class="stack" style="margin-top: 1.75rem;" aria-label="Stack technique">
+        <span class="chip">CrewAI</span>
+        <span class="chip">Streamlit</span>
+        <span class="chip">Plotly</span>
+        <span class="chip">llama-server (GGUF)</span>
+        <span class="chip">SQLite traces</span>
+      </div>
+      <p class="note">
+        <strong>Sur Vercel :</strong> site de présentation (cette page + slides).
+        Le dashboard Streamlit et le LLM local restent sur une machine avec GPU —
+        Vercel ne peut pas les héberger.
+      </p>
+    </div>
+  </section>
+
+  <section id="local">
+    <div class="section-inner">
+      <p class="section-label">Exécution locale</p>
+      <h2>Lancer l’app complète chez vous</h2>
+      <p class="lede">
+        Python 3.12, llama-server, et un GGUF (~12 Go). GPU NVIDIA recommandée.
+      </p>
+      <div class="local-steps">
+        <div class="step">
+          <span class="step-n">1</span>
+          <div>
+            <h3>Installer les dépendances</h3>
+            <p><code>uv pip install -r requirements.txt</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-n">2</span>
+          <div>
+            <h3>Démarrer le LLM local</h3>
+            <p><code>bash scripts/start_llm.sh</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-n">3</span>
+          <div>
+            <h3>Collecter des traces</h3>
+            <p><code>python -m scripts.run_batch --per-scenario 4 --live 1</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-n">4</span>
+          <div>
+            <h3>Ouvrir le dashboard</h3>
+            <p><code>streamlit run dashboard/app.py</code></p>
+          </div>
+        </div>
+      </div>
+      <div class="cta-row" style="margin-top: 2rem;">
+        <a class="btn btn-primary" href="/presentation">Présenter les slides</a>
+        <a class="btn btn-ghost" href="https://github.com/gabo2212/Observatoire-SOC-Multiagents" target="_blank" rel="noopener noreferrer">Code sur GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="section-inner">
+      <p>420-VD2-ID · Projet pédagogique · données synthétiques ACME-LAB</p>
+      <p><a href="/presentation">Slides</a> · <a href="https://github.com/gabo2212/Observatoire-SOC-Multiagents">GitHub</a></p>
+    </div>
+  </footer>
+</body>
+</html>
